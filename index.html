@@ -348,7 +348,7 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // ---------- state ----------
 let trip=null, pos=0, gps=null, demo=false, nearI=0;
 // Live NS-tijden via je eigen Cloudflare Worker (zie worker.js). Vul hier de Worker-URL in, zonder / aan het eind.
-const NS_PROXY_URL = "";
+const NS_PROXY_URL = "https://spoorscore.henkdepotvis696969.workers.dev";
 let live=null, liveMsg="", trainNr=store.get("sq-train","");
 const ai={};
 const seen=new Set(store.get("sq2-seen",[]));
