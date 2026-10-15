@@ -100,6 +100,7 @@ h1 span{font-weight:400}
 
 /* informatiescherm */
 .led{background:var(--led-bg);color:var(--led);font-family:var(--f-body);font-size:.95rem;line-height:1.45;border-radius:8px;padding:10px 14px;min-height:3.4em;box-shadow:inset 0 0 0 2px var(--seal)}
+.led button{background:var(--yellow);color:#003082;border:0;border-radius:4px;padding:4px 10px;font-weight:700;margin:6px 6px 0 0;font-size:.85rem}
 .led b{color:var(--led-hi)}
 .led .ok b{color:#5fe39a}.led .bad b{color:#ff8a9a}
 
@@ -199,6 +200,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       <label class="full"><button class="btn" id="start" type="button">Start rit</button></label>
     </div>
     <p class="hint" id="gpsHint"></p>
+    <p class="hint"><button class="btn ghost" id="findTrain" type="button">Zoek mijn trein via locatie</button></p>
     <p class="hint" id="liveHint"></p>
   </details>
 
@@ -349,7 +351,10 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let trip=null, pos=0, gps=null, demo=false, nearI=0;
 // Live NS-tijden via je eigen Cloudflare Worker (zie worker.js). Vul hier de Worker-URL in, zonder / aan het eind.
 const NS_PROXY_URL = "https://spoorscore.henkdepotvis696969.workers.dev";
-let live=null, liveMsg="", trainNr=store.get("sq-train","");
+let live=null, liveMsg="";
+let trainNr=(()=>{const t=store.get("sq-train2",null);return t&&Date.now()-t.at<4*3600e3?t.nr:""})();
+function setTrainNr(nr){trainNr=String(nr||"").replace(/\D/g,"");store.set("sq-train2",{nr:trainNr,at:Date.now()});$("trainNr").value=trainNr}
+let lastDetect=0, lastCand=null; const declined=new Set();
 const ai={};
 const seen=new Set(store.get("sq2-seen",[]));
 let liked=store.get("sq2-liked",[]);           // [{id,st,t}]
@@ -409,12 +414,66 @@ async function fetchLive(){
     const j=await r.json().catch(()=>({error:"Onleesbaar antwoord"}));
     if(!r.ok||j.error) throw new Error(j.error||("status "+r.status));
     if(!j.stops?.length) throw new Error("geen haltes gevonden voor trein "+trainNr);
-    live=j; const m=j.stops.filter(x=>kmOf(x.name)!=null).length;
-    $("liveHint").textContent=m>=2?`Live NS-tijden voor trein ${trainNr} (bijgewerkt ${fmtTime(new Date())}).`:`Trein ${trainNr} gevonden, maar hij rijdt niet over jouw gekozen route.`;
+    live=j;
+    const t=tripFromJourney(j);
+    if(t && (trip.line.id!=="live" || trip.stops.join()!==t.stops.join())){
+      trip=t; demo=false; nearI=-1; saveTrip(); setupSum(); $("setup").open=false;
+      $("led").innerHTML=`Je zit in trein <b>${esc(trainNr)}</b> naar <b>${esc(S[t.stops.at(-1)].n)}</b>. Swipe maar! <button type="button" data-act="notme">Klopt niet</button>`;
+      $("led").querySelector('[data-act="notme"]').onclick=notMyTrain;
+    }
+    $("liveHint").textContent=`Live NS-tijden voor trein ${trainNr} (bijgewerkt ${fmtTime(new Date())}).`;
   }catch(e){
     live=null; $("liveHint").textContent=`Live NS-tijden niet beschikbaar: ${e.message||"geen verbinding"}.`;
   }
   render();
+}
+function tripFromJourney(j){
+  const stops=[];
+  for(const st of j.stops||[]){
+    if(st.cancelled||st.lat==null||st.lng==null||!st.name) continue;
+    let k=Object.keys(S).find(x=>norm(S[x].n)===norm(st.name));
+    if(st.passing&&!k) continue;              // doorkomende stations alleen als we er kaarten voor hebben
+    if(!k){k="x_"+norm(st.name); S[k]={n:st.name,lat:+st.lat,lon:+st.lng}}
+    if(stops.at(-1)!==k) stops.push(k);
+  }
+  if(stops.length<2) return null;
+  const cum=[0]; for(let i=1;i<stops.length;i++) cum.push(cum[i-1]+hav(S[stops[i-1]],S[stops[i]]));
+  return {line:{id:"live",n:`Trein ${j.train}`},stops,cum,t0:Date.now()};
+}
+const angDiff=(a,b)=>Math.abs(((a-b)%360+540)%360-180);
+async function maybeDetect(force){
+  if(!NS_PROXY_URL||!gps||trainNr) return;
+  if(!force&&Date.now()-lastDetect<30000) return;
+  lastDetect=Date.now();
+  try{
+    const r=await fetch(`${NS_PROXY_URL}/nearby?lat=${gps.lat.toFixed(5)}&lng=${gps.lon.toFixed(5)}`);
+    const j=await r.json().catch(()=>({error:"Onleesbaar antwoord"}));
+    if(!r.ok||j.error) throw new Error(j.error||("status "+r.status));
+    const moving=gps.heading!=null&&!isNaN(gps.heading)&&(gps.speed||0)>3;
+    let c=(j.candidates||[]).filter(x=>x.train&&!declined.has(String(x.train)))
+      .map(x=>({...x,score:x.distM+(moving&&x.dir!=null&&angDiff(x.dir,gps.heading)>90?5000:0)}))
+      .filter(x=>x.score<2500).sort((a,b)=>a.score-b.score);
+    if(!c.length){lastCand=null;$("liveHint").textContent="Nog geen trein in de buurt gevonden. De app blijft zoeken.";return}
+    const best=c[0], clear=!c[1]||c[1].score>best.score*3+300;
+    if(clear&&lastCand===String(best.train)){chooseTrain(best.train);return}
+    lastCand=String(best.train);
+    if(clear){$("liveHint").textContent=`Mogelijk zit je in trein ${best.train}. Even controleren…`;setTimeout(()=>maybeDetect(true),15000)}
+    else askWhich(c.slice(0,3));
+  }catch(e){$("liveHint").textContent=`Trein zoeken lukt nu niet: ${e.message||"geen verbinding"}.`}
+}
+function askWhich(c){
+  $("led").innerHTML=`In welke trein zit je? `+c.map(x=>`<button type="button" data-nr="${esc(x.train)}">${esc(x.type||"Trein")} ${esc(x.train)} · ${Math.round(x.distM)} m</button>`).join("")+`<button type="button" data-nr="">Geen van deze</button>`;
+  $("led").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    if(b.dataset.nr) chooseTrain(b.dataset.nr);
+    else {c.forEach(x=>declined.add(String(x.train)));$("led").textContent="Oké, de app blijft zoeken.";}
+  });
+}
+function chooseTrain(nr){setTrainNr(nr);$("liveHint").textContent=`Rit van trein ${trainNr} wordt opgehaald…`;fetchLive()}
+function notMyTrain(){
+  if(trainNr) declined.add(trainNr);
+  setTrainNr(""); live=null; lastCand=null;
+  $("led").textContent="Oké, ik zoek een andere trein.";
+  maybeDetect(true); render();
 }
 function computePos(){
   if(gps){const pr=project(gps); if(pr.d<15) return {km:pr.km,src:"gps"};}
@@ -635,15 +694,16 @@ function fillSelects(lineId,f,t){
   $("from").innerHTML=o(f); $("to").innerHTML=o(t);
 }
 $("line").onchange=()=>{const L=LINES.find(l=>l.id===$("line").value);fillSelects(L.id,L.s[0],L.s.at(-1))};
-function saveTrip(){store.set("sq-trip",{l:trip.line.id,f:trip.stops[0],t:trip.stops.at(-1),t0:trip.t0})}
-function setupSum(){$("setupSum").textContent=`${S[trip.stops[0]].n} → ${S[trip.stops.at(-1)].n}`}
+function saveTrip(){store.set("sq-trip",trip.line.id==="live"?{live:true,t0:trip.t0}:{l:trip.line.id,f:trip.stops[0],t:trip.stops.at(-1),t0:trip.t0})}
+function setupSum(){$("setupSum").textContent=(trip.line.id==="live"?`Trein ${trainNr}: `:"")+`${S[trip.stops[0]].n} → ${S[trip.stops.at(-1)].n}`}
 $("start").onclick=()=>{
   const f=$("from").value,t=$("to").value;
   if(f===t){$("gpsHint").textContent="Kies een ander eindstation dan je vertrekstation.";return}
   const [h,m]=($("dep").value||fmtTime(new Date())).split(":").map(Number);
   const d=new Date(); d.setHours(h,m,0,0); if(d-Date.now()>12*3600e3) d.setDate(d.getDate()-1);
-  trip=buildTrip($("line").value,f,t,d.getTime()); demo=false; saveTrip();
-  trainNr=($("trainNr").value||"").replace(/\D/g,""); store.set("sq-train",trainNr); fetchLive();
+  setTrainNr($("trainNr").value);
+  if(trainNr){ $("setup").open=false; $("led").innerHTML=`Rit van trein <b>${esc(trainNr)}</b> wordt opgehaald…`; fetchLive(); return; }
+  live=null; trip=buildTrip($("line").value,f,t,d.getTime()); demo=false; saveTrip();
   $("setup").open=false; setupSum(); nearI=-1; render();
   $("led").innerHTML=`Goede reis naar <b>${esc(S[t].n)}</b>. Swipe maar!`;
 };
@@ -652,7 +712,7 @@ $("start").onclick=()=>{
 function startGps(){
   if(!("geolocation" in navigator)){$("gpsHint").textContent="Dit apparaat geeft geen locatie door. De positie wordt geschat op je vertrektijd.";return}
   try{navigator.geolocation.watchPosition(
-    p=>{gps={lat:p.coords.latitude,lon:p.coords.longitude};$("gpsHint").textContent="GPS actief. Ben je ver van de route, dan valt de app terug op de tijd-schatting.";render()},
+    p=>{gps={lat:p.coords.latitude,lon:p.coords.longitude,heading:p.coords.heading,speed:p.coords.speed};maybeDetect();$("gpsHint").textContent="GPS actief. Ben je ver van de route, dan valt de app terug op de tijd-schatting.";render()},
     ()=>{gps=null;$("gpsHint").textContent="GPS is hier niet beschikbaar. De positie wordt geschat op je vertrektijd.";render()},
     {enableHighAccuracy:true,maximumAge:15000,timeout:20000});
   }catch{$("gpsHint").textContent="GPS is hier niet beschikbaar."}
@@ -702,6 +762,9 @@ $("aiBtn").onclick=askClaude;
   $("dep").value=fmtTime(new Date(trip.t0));
   setSound(soundOn); setupSum(); updateScore(); renderSaved(); render(); renderDeck(true); startGps();
   $("trainNr").value=trainNr; fetchLive();
+  $("findTrain").onclick=()=>{ setTrainNr(""); live=null; declined.clear(); lastCand=null;
+    if(!gps){$("liveHint").textContent="Zet eerst je locatie aan, dan kan de app je trein zoeken.";return}
+    $("liveHint").textContent="Bezig met zoeken naar je trein…"; maybeDetect(true); };
   setInterval(render,15000);
   setInterval(()=>{ if(document.visibilityState==="visible") fetchLive(); },60000);
 })();
