@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Spoorquiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: één kolom zoals een lijnenkaart — "nu"-paneel bovenaan, inhoud in het midden, de route als verticale spoorlijn onderaan */
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --ink:#121a2b; --muted:#5b6578; --line:#d5dbe6;
+  --rail:#1d47c8; --rail-soft:#e3e9fb; --signal:#e0552b; --ok:#1f8a4c; --ok-soft:#e2f4e9; --bad:#c23a2b; --bad-soft:#fbe7e3;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1220; --surface:#161d30; --ink:#e8ecf5; --muted:#9aa4b8; --line:#2a3350;
+  --rail:#7c9cff; --rail-soft:#1f2a4d; --signal:#ff8a5c; --ok:#5fd18f; --ok-soft:#173326; --bad:#ff7a6b; --bad-soft:#3a1d1b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1220; --surface:#161d30; --ink:#e8ecf5; --muted:#9aa4b8; --line:#2a3350;
+  --rail:#7c9cff; --rail-soft:#1f2a4d; --signal:#ff8a5c; --ok:#5fd18f; --ok-soft:#173326; --bad:#ff7a6b; --bad-soft:#3a1d1b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:800;font-size:1.9rem;letter-spacing:-.02em;margin:0;line-height:1}
+h1 span{color:var(--rail)}
+.score{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--rail-soft);color:var(--rail)}
+.chip.warn{background:var(--bad-soft);color:var(--signal)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--rail);outline-offset:2px}
+
+/* rit instellen */
+details.setup summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
+details.setup summary::-webkit-details-marker{display:none}
+details.setup summary .sum{font-weight:400;color:var(--muted);font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;min-width:0}
+.form .full{grid-column:1/-1}
+select,input{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);width:100%}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--rail);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--rail);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.hint{font-size:.85rem;color:var(--muted);margin:10px 0 0}
+
+/* nu-paneel */
+.now{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.now h2{font-family:var(--f-display);font-weight:800;font-size:1.6rem;margin:0;line-height:1.1;text-wrap:balance}
+.bar{height:8px;background:var(--rail-soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--rail);border-radius:99px;transition:width .6s}
+.stats{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:500}
+
+/* inhoud */
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:-4px 0 14px}
+.tab{border:0;background:none;padding:8px 12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--signal)}
+.stationhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stationhead h3{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:0}
+.link{background:none;border:0;color:var(--rail);font-weight:700;padding:0;font-size:.9rem}
+.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.facts li{padding:12px 14px;background:var(--bg);border-radius:10px;min-width:0}
+.tag{display:inline-block;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--rail);margin-bottom:2px}
+.tag.ai{color:var(--signal)}
+.q{font-weight:700;margin:0 0 10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 14px}
+.opt:hover:not(:disabled){border-color:var(--rail)}
+.opt.right{background:var(--ok-soft);border-color:var(--ok);color:var(--ink)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.opt:disabled{cursor:default}
+.explain{margin:10px 0 0;font-size:.92rem;color:var(--muted)}
+.quizitem+.quizitem{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line)}
+.ai-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.ai-note{font-size:.8rem;color:var(--muted)}
+.empty{color:var(--muted);margin:0}
+
+/* route als spoorlijn */
+.route{list-style:none;margin:0;padding:0;position:relative}
+.route li{position:relative;padding-left:34px}
+.route li::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:4px;background:var(--rail-soft)}
+.route li:first-child::before{top:50%}
+.route li:last-child::before{bottom:50%}
+.route li.passed::before{background:var(--rail)}
+.route li.half::before{background:linear-gradient(var(--rail) var(--h,50%),var(--rail-soft) var(--h,50%))}
+.route button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:10px;width:100%;padding:9px 0;box-sizing:border-box}
+.route button:focus-visible{outline:3px solid var(--rail);outline-offset:2px;border-radius:6px}
+.route .stop{position:absolute;left:5px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--surface);border:3px solid var(--rail-soft);z-index:1}
+.route li.passed .stop,.route li.half .stop{border-color:var(--rail)}
+.route li.here .stop{background:var(--signal);border-color:var(--signal);box-shadow:0 0 0 5px color-mix(in srgb,var(--signal) 25%,transparent)}
+.route li.viewing .name{text-decoration:underline;text-decoration-color:var(--signal);text-decoration-thickness:2px;text-underline-offset:4px}
+.route .name{font-weight:700}
+.route li.passed .name{color:var(--muted);font-weight:400}
+.route .km{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.train{position:absolute;left:3px;width:20px;height:20px;margin-top:-10px;border-radius:6px;background:var(--signal);z-index:2;transition:top .6s}
+.train::after{content:"";position:absolute;inset:6px 4px auto 4px;height:4px;background:var(--surface);border-radius:2px}
+.foot{font-size:.8rem;color:var(--muted);text-align:center}
+@media (max-width:420px){.form{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i,.train{transition:none}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Spoor<span>quiz</span></h1>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="score" id="score">0/0 goed</span>
+      <span class="chip" id="mode"><span class="dot"></span><span id="modeTxt">Tijd-schatting</span></span>
+    </div>
+  </header>
+
+  <details class="setup panel" id="setup">
+    <summary><span>Jouw rit</span><span class="sum" id="setupSum"></span></summary>
+    <div class="form">
+      <label class="full">Lijn<select id="line"></select></label>
+      <label>Van<select id="from"></select></label>
+      <label>Naar<select id="to"></select></label>
+      <label>Vertrektijd<input type="time" id="dep"></label>
+      <label style="justify-content:flex-end"><button class="btn" id="start" type="button">Start rit</button></label>
+    </div>
+    <p class="hint" id="gpsHint"></p>
+  </details>
+
+  <section class="panel now" aria-live="polite">
+    <span class="eyebrow" id="nowEyebrow">Voorbeeldrit</span>
+    <h2 id="nowTitle">…</h2>
+    <div class="bar"><i id="bar" style="width:0"></i></div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabFacts" aria-selected="true" type="button">Funfacts</button>
+      <button class="tab" role="tab" id="tabQuiz" aria-selected="false" type="button">Quiz</button>
+    </div>
+    <div class="stationhead">
+      <h3 id="stName">…</h3>
+      <div style="display:flex;gap:14px">
+        <button class="link" id="follow" type="button" hidden>Volg de trein</button>
+        <button class="link" id="imHere" type="button" hidden>Ik ben nu hier</button>
+      </div>
+    </div>
+    <div id="content"></div>
+    <div class="ai-row" id="aiRow" hidden>
+      <button class="btn ghost" id="aiBtn" type="button">Meer van Claude</button>
+      <span class="ai-note" id="aiNote">Nieuwe feiten en een quizvraag over deze plek. AI kan fouten maken.</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <span class="eyebrow">Route · tik op een station om erover te lezen</span>
+    <ol class="route" id="route" style="margin-top:10px"></ol>
+  </section>
+
+  <p class="foot">Positie zonder GPS is een schatting op basis van je vertrektijd. Tik bij een station op "Ik ben nu hier" om bij te stellen.</p>
+</div>
+
+<script>
+// ---------- Stations: coördinaten + vaste funfacts en quizvragen ----------
+const S = {
+  ehv:{n:"Eindhoven Centraal",lat:51.4433,lon:5.4814,
+    f:["Philips begon hier in 1891 met het maken van gloeilampen. Daarom heet Eindhoven ook wel 'Lichtstad'.","De voetbalclub PSV is ooit opgericht als Philips Sport Vereniging."],
+    q:[{q:"Waar staat de afkorting PSV oorspronkelijk voor?",o:["Philips Sport Vereniging","Prins Sport Vereniging","Provinciale Sport Vereniging","Philips Stads Voetbal"],a:0,e:"PSV werd in 1913 opgericht als sportclub voor Philips-medewerkers."}]},
+  bst:{n:"Best",lat:51.5100,lon:5.3906,
+    f:["In Best stond een grote schoenfabriek van Bata, met een eigen arbeiderswijk eromheen: het Batadorp."]},
+  btl:{n:"Boxtel",lat:51.5838,lon:5.3194,
+    f:["Bij Boxtel splitst het spoor: één tak gaat naar Eindhoven, de andere naar Tilburg."]},
+  vg:{n:"Vught",lat:51.6585,lon:5.2900,
+    f:["In Vught ligt Nationaal Monument Kamp Vught, het enige SS-concentratiekamp buiten Duitsland en Oostenrijk in West-Europa."]},
+  ht:{n:"'s-Hertogenbosch",lat:51.6905,lon:5.2935,
+    f:["De naam betekent 'het bos van de hertog'. Hertog Hendrik I van Brabant gaf de stad rond 1185 stadsrechten.","De schilder Jheronimus Bosch woonde en werkte hier zijn hele leven. Hij noemde zich naar de stad.","Onder de oude binnenstad stroomt de Binnendieze, een deels overkluisde rivier waar je met een bootje doorheen kunt varen."],
+    q:[{q:"Welke beroemde schilder vernoemde zichzelf naar Den Bosch?",o:["Jheronimus Bosch","Vincent van Gogh","Rembrandt","Pieter Bruegel"],a:0,e:"Jheronimus Bosch (ca. 1450–1516) heette eigenlijk Van Aken."},
+       {q:"Waar is een Bossche bol mee gevuld?",o:["Slagroom","Banketbakkersroom","Appel","Amandelspijs"],a:0,e:"Een Bossche bol is een grote soes vol slagroom met een laag chocolade erover."}]},
+  ztb:{n:"Zaltbommel",lat:51.8100,lon:5.2483,
+    f:["Net voor of na Zaltbommel gaat de trein over de Waal, de drukste rivier van Nederland voor de binnenvaart.","Karl Marx logeerde in de jaren 1860 een tijd in Zaltbommel bij zijn oom Lion Philips."],
+    q:[{q:"Welke rivier kruist de trein bij Zaltbommel?",o:["De Waal","De Maas","De Lek","De IJssel"],a:0,e:"De spoorbrug bij Zaltbommel overspant de Waal."}]},
+  gdm:{n:"Geldermalsen",lat:51.8840,lon:5.2717,
+    f:["Je rijdt hier door de Betuwe, bekend om zijn fruitboomgaarden met appels, peren en kersen.","Het VOC-schip 'Geldermalsen' zonk in 1752 met een lading Chinees porselein. Die werd in de jaren 80 gevonden en geveild als de 'Nanking Cargo'."],
+    q:[{q:"Waar staat de Betuwe vooral om bekend?",o:["Fruitteelt","Tulpenvelden","Turfwinning","Zoutmijnen"],a:0,e:"De Betuwe is een van de belangrijkste fruitgebieden van Nederland."}]},
+  cl:{n:"Culemborg",lat:51.9550,lon:5.2283,
+    f:["Jan van Riebeeck, die in 1652 de VOC-post bij Kaapstad stichtte, werd in Culemborg geboren.","Bij Culemborg gaat de trein over de Lek."],
+    q:[{q:"Welke stad stichtte Jan van Riebeeck uit Culemborg?",o:["Kaapstad","New York","Batavia","Paramaribo"],a:0,e:"Hij zette in 1652 een verversingspost op aan de Kaap."}]},
+  htn:{n:"Houten",lat:52.0350,lon:5.1683,
+    f:["Houten is ontworpen als fietsstad: auto's moeten via een rondweg om de wijken heen, fietsers kunnen er dwars doorheen."]},
+  utl:{n:"Utrecht Lunetten",lat:52.0614,lon:5.1350,
+    f:["De wijk Lunetten is genoemd naar vier 'lunetten': kleine forten uit de 19e eeuw die bij de verdediging van Utrecht hoorden."]},
+  ut:{n:"Utrecht Centraal",lat:52.0894,lon:5.1101,
+    f:["Utrecht Centraal is het drukste station van Nederland.","Bij het station ligt de grootste fietsenstalling ter wereld, met plek voor zo'n 12.500 fietsen.","De Domtoren is met 112 meter de hoogste kerktoren van Nederland. Het schip van de kerk stortte in 1674 in tijdens een storm."],
+    q:[{q:"Hoe hoog is de Domtoren ongeveer?",o:["112 meter","72 meter","148 meter","95 meter"],a:0,e:"Met 112 meter is het de hoogste kerktoren van Nederland."},
+       {q:"Waarom staat de Domtoren los van de Domkerk?",o:["Het schip stortte in tijdens een storm in 1674","Hij is later bijgebouwd","De kerk is verplaatst","Hij is na een brand losgezaagd"],a:0,e:"Het middenschip tussen toren en kerk werd verwoest en nooit herbouwd."}]},
+  mas:{n:"Maarssen",lat:52.1350,lon:5.0330,
+    f:["Langs de Vecht bij Maarssen bouwden rijke Amsterdamse kooplieden in de 17e en 18e eeuw hun buitenplaatsen."]},
+  bkl:{n:"Breukelen",lat:52.1711,lon:5.0011,
+    f:["De wijk Brooklyn in New York is vernoemd naar Breukelen. Nederlandse kolonisten noemden het in de 17e eeuw 'Breuckelen'."],
+    q:[{q:"Welke wijk in New York is naar Breukelen vernoemd?",o:["Brooklyn","Harlem","The Bronx","Staten Island"],a:0,e:"Harlem is trouwens naar Haarlem vernoemd."}]},
+  ac:{n:"Abcoude",lat:52.2775,lon:4.9711},
+  dvd:{n:"Duivendrecht",lat:52.3236,lon:4.9364},
+  asa:{n:"Amsterdam Amstel",lat:52.3467,lon:4.9178},
+  asd:{n:"Amsterdam Centraal",lat:52.3789,lon:4.9003,
+    f:["Het station staat op kunstmatige eilanden in het IJ, gebouwd op duizenden houten palen.","Architect Pierre Cuypers ontwierp het station. Hij ontwierp ook het Rijksmuseum.","Het station werd in 1889 geopend."],
+    q:[{q:"Welke architect ontwierp zowel Amsterdam Centraal als het Rijksmuseum?",o:["Pierre Cuypers","Hendrik Berlage","Rem Koolhaas","Michel de Klerk"],a:0,e:"Cuypers kwam uit Roermond en ontwierp ook veel kerken."}]},
+  rs:{n:"Rosmalen",lat:51.7165,lon:5.3700},
+  o:{n:"Oss",lat:51.7646,lon:5.5266,
+    f:["In Oss zaten de margarinefabrieken van Jurgens en Van den Bergh. Zij werden later een deel van Unilever."],
+    q:[{q:"Welk product maakte Oss groot?",o:["Margarine","Kaas","Sigaren","Textiel"],a:0,e:"Jurgens en Van den Bergh fuseerden later tot de Margarine Unie, een voorloper van Unilever."}]},
+  rvs:{n:"Ravenstein",lat:51.7953,lon:5.6500},
+  wc:{n:"Wijchen",lat:51.8094,lon:5.7258},
+  nm:{n:"Nijmegen",lat:51.8433,lon:5.8528,
+    f:["Nijmegen ziet zichzelf als oudste stad van Nederland. De Romeinen noemden de plek Noviomagus.","Elk jaar in juli lopen tienduizenden mensen hier de Vierdaagse."],
+    q:[{q:"Hoe noemden de Romeinen Nijmegen?",o:["Noviomagus","Traiectum","Lugdunum","Forum Hadriani"],a:0,e:"Traiectum was Utrecht, Forum Hadriani lag bij Voorburg."}]},
+  ost:{n:"Oisterwijk",lat:51.5806,lon:5.1897,
+    f:["Rond Oisterwijk liggen de Oisterwijkse Bossen en Vennen: bos met tientallen kleine meertjes."]},
+  tb:{n:"Tilburg",lat:51.5606,lon:5.0837,
+    f:["Tilburg was lang de belangrijkste wolstad van Nederland, met tientallen textielfabrieken.","Vlak bij Tilburg brouwen monniken van abdij Koningshoeven het trappistenbier La Trappe."],
+    q:[{q:"Waar stond Tilburg vroeger om bekend?",o:["Wol en textiel","Scheepsbouw","Steenkool","Diamanten"],a:0,e:"In het TextielMuseum kun je die geschiedenis nog zien."}]},
+  tbu:{n:"Tilburg Universiteit",lat:51.5653,lon:5.0500},
+  gz:{n:"Gilze-Rijen",lat:51.5444,lon:4.9314,
+    f:["Bij Gilze-Rijen ligt een vliegbasis van de Luchtmacht, vooral bekend van de helikopters."]},
+  bd:{n:"Breda",lat:51.5955,lon:4.7799,
+    f:["In het Kasteel van Breda zit de Koninklijke Militaire Academie, waar officieren worden opgeleid.","In 1667 werd hier de Vrede van Breda gesloten tussen Engeland en de Republiek."],
+    q:[{q:"Welke opleiding zit in het Kasteel van Breda?",o:["Koninklijke Militaire Academie","Hotelschool","Kunstacademie","Politieacademie"],a:0,e:"De KMA zit sinds 1828 in het kasteel."}]},
+  asd2:{n:"Amsterdam Sloterdijk",lat:52.3889,lon:4.8378},
+  shl:{n:"Schiphol Airport",lat:52.3094,lon:4.7617,
+    f:["Schiphol ligt ongeveer drie meter onder zeeniveau, op de bodem van het vroegere Haarlemmermeer.","Dat meer werd tussen 1849 en 1852 drooggemalen."],
+    q:[{q:"Hoe ligt Schiphol ten opzichte van zeeniveau?",o:["Ongeveer 3 meter eronder","Precies op zeeniveau","Ongeveer 3 meter erboven","Ongeveer 10 meter eronder"],a:0,e:"De luchthaven ligt in de drooggemalen Haarlemmermeerpolder."}]},
+  hfd:{n:"Hoofddorp",lat:52.2919,lon:4.7022},
+  ledn:{n:"Leiden Centraal",lat:52.1664,lon:4.4817,
+    f:["Leiden heeft de oudste universiteit van Nederland, opgericht in 1575.","Rembrandt werd in 1606 in Leiden geboren."],
+    q:[{q:"Wanneer werd de Universiteit Leiden opgericht?",o:["1575","1675","1475","1815"],a:0,e:"Willem van Oranje gaf de stad de universiteit na het Beleg van Leiden."}]},
+  gvc:{n:"Den Haag Centraal",lat:52.0808,lon:4.3247,
+    f:["Den Haag is de regeringsstad, maar Amsterdam is de hoofdstad.","In het Vredespaleis zit het Internationaal Gerechtshof van de Verenigde Naties."],
+    q:[{q:"Welke stad is de hoofdstad van Nederland?",o:["Amsterdam","Den Haag","Utrecht","Rotterdam"],a:0,e:"Regering en parlement zitten wel in Den Haag."}]},
+  dt:{n:"Delft",lat:52.0067,lon:4.3564,
+    f:["Willem van Oranje werd in 1584 vermoord in het Prinsenhof in Delft.","De schilder Johannes Vermeer woonde en werkte zijn hele leven in Delft."],
+    q:[{q:"Welke schilder van 'Gezicht op Delft' woonde in deze stad?",o:["Johannes Vermeer","Frans Hals","Jan Steen","Rembrandt"],a:0,e:"Vermeer werd in 1632 in Delft geboren."}]},
+  sdm:{n:"Schiedam Centrum",lat:51.9217,lon:4.4092,
+    f:["Schiedam is de stad van de jenever en heeft de hoogste traditionele windmolens ter wereld."]},
+  rtd:{n:"Rotterdam Centraal",lat:51.9250,lon:4.4689,
+    f:["De haven van Rotterdam is de grootste van Europa.","De Erasmusbrug heeft als bijnaam 'de Zwaan'.","Op 14 mei 1940 werd de binnenstad door een bombardement grotendeels verwoest."],
+    q:[{q:"Wat is de bijnaam van de Erasmusbrug?",o:["De Zwaan","De Harp","De Reiger","De Boog"],a:0,e:"Door de witte, schuine pyloon lijkt hij op een zwanenhals."}]},
+  ddr:{n:"Dordrecht",lat:51.8075,lon:4.6683,
+    f:["Dordrecht kreeg in 1220 stadsrechten en is daarmee de oudste stad van Holland.","Op de Synode van Dordrecht (1618–1619) werd besloten tot de Statenvertaling van de Bijbel."],
+    q:[{q:"Wat werd er op de Synode van Dordrecht besloten?",o:["Een nieuwe Bijbelvertaling","De afschaffing van de slavernij","De bouw van de Deltawerken","Het eerste spoor van Nederland"],a:0,e:"Die vertaling verscheen in 1637 als de Statenvertaling."}]},
+  wt:{n:"Weert",lat:51.2475,lon:5.7064},
+  rm:{n:"Roermond",lat:51.1925,lon:5.9936,
+    f:["Architect Pierre Cuypers, van Amsterdam Centraal en het Rijksmuseum, werd in Roermond geboren."]},
+  std:{n:"Sittard",lat:51.0003,lon:5.8572},
+  mt:{n:"Maastricht",lat:50.8497,lon:5.7053,
+    f:["In 1992 werd hier het Verdrag van Maastricht getekend, waarmee de Europese Unie ontstond.","Onder de Sint-Pietersberg ligt een doolhof van kilometers lange mergelgangen."],
+    q:[{q:"Wat ontstond er met het Verdrag van Maastricht?",o:["De Europese Unie","De NAVO","De Benelux","De Verenigde Naties"],a:0,e:"Het verdrag werd in februari 1992 ondertekend."}]}
+};
+const LINES = [
+  {id:"A",n:"Eindhoven – 's-Hertogenbosch – Utrecht – Amsterdam",s:["ehv","bst","btl","vg","ht","ztb","gdm","cl","htn","utl","ut","mas","bkl","ac","dvd","asa","asd"]},
+  {id:"B",n:"'s-Hertogenbosch – Nijmegen",s:["ht","rs","o","rvs","wc","nm"]},
+  {id:"C",n:"'s-Hertogenbosch – Tilburg – Breda",s:["ht","vg","btl","ost","tb","tbu","gz","bd"]},
+  {id:"D",n:"Amsterdam – Schiphol – Den Haag – Rotterdam",s:["asd","asd2","shl","hfd","ledn","gvc","dt","sdm","rtd"]},
+  {id:"E",n:"Rotterdam – Dordrecht – Breda",s:["rtd","ddr","bd"]},
+  {id:"F",n:"Eindhoven – Roermond – Maastricht",s:["ehv","wt","rm","std","mt"]}
+];
+const SPEED = 80/60; // km (hemelsbreed) per minuut, inclusief stops — benadert intercitytijden
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+function hav(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r;const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+const fmtTime = d => d.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------- state ----------
+let trip = null;          // {line, stops:[keys], cum:[km], t0:ms}
+let demo = false;
+let pos = 0;              // km langs de route
+let gps = null;           // laatste GPS-fix
+let viewKey = null;       // handmatig gekozen station (null = volg trein)
+let tab = "facts";
+const ai = {};            // per station: {facts:[], quiz:[]}
+let answered = store.get("sq-answered",{}); // id -> true/false
+
+function buildTrip(lineId, fromKey, toKey, t0){
+  const L = LINES.find(l=>l.id===lineId);
+  let i=L.s.indexOf(fromKey), j=L.s.indexOf(toKey);
+  let stops = i<=j ? L.s.slice(i,j+1) : L.s.slice(j,i+1).reverse();
+  const cum=[0]; for(let k=1;k<stops.length;k++) cum.push(cum[k-1]+hav(S[stops[k-1]],S[stops[k]]));
+  return {line:L, stops, cum, t0};
+}
+
+// ---------- positie ----------
+function project(p){ // GPS-punt → km langs de route
+  const lat0=p.lat*Math.PI/180, X=q=>q.lon*Math.cos(lat0)*111.32, Y=q=>q.lat*110.57;
+  let best={d:Infinity,km:0};
+  for(let k=0;k<trip.stops.length-1;k++){
+    const a=S[trip.stops[k]],b=S[trip.stops[k+1]];
+    const ax=X(a),ay=Y(a),bx=X(b),by=Y(b),px=X(p),py=Y(p);
+    const vx=bx-ax,vy=by-ay,L2=vx*vx+vy*vy||1;
+    const t=Math.max(0,Math.min(1,((px-ax)*vx+(py-ay)*vy)/L2));
+    const d=Math.hypot(ax+t*vx-px,ay+t*vy-py);
+    if(d<best.d) best={d,km:trip.cum[k]+t*(trip.cum[k+1]-trip.cum[k])};
+  }
+  return best;
+}
+function computePos(){
+  if(gps){ const pr=project(gps); if(pr.d<15) return {km:pr.km,src:"gps"}; }
+  return {km:(Date.now()-trip.t0)/60000*SPEED, src:"time"};
+}
+function nearestIdx(km){let b=0;trip.cum.forEach((c,i)=>{if(Math.abs(c-km)<Math.abs(trip.cum[b]-km))b=i});return b}
+
+// ---------- render ----------
+function render(){
+  const P=computePos(), total=trip.cum.at(-1);
+  pos=P.km;
+  const clamped=Math.max(0,Math.min(total,pos));
+  const n=trip.stops.length;
+  let next=trip.cum.findIndex(c=>c>clamped+0.3); if(next<0) next=n-1;
+  const near=nearestIdx(clamped);
+  const atStation=Math.abs(trip.cum[near]-clamped)<1.5;
+
+  // modus
+  $("mode").classList.toggle("warn", P.src!=="gps");
+  $("modeTxt").textContent = P.src==="gps" ? "GPS live" : "Tijd-schatting";
+
+  // nu-paneel
+  const minsLeft=(total-clamped)/SPEED;
+  if(pos<0){
+    $("nowEyebrow").textContent="Nog niet vertrokken";
+    $("nowTitle").textContent=`Vertrek uit ${S[trip.stops[0]].n} over ${Math.ceil(-pos/SPEED)} min`;
+  } else if(clamped>=total-0.3){
+    $("nowEyebrow").textContent="Aangekomen";
+    $("nowTitle").textContent=`Welkom in ${S[trip.stops[n-1]].n}`;
+  } else if(atStation){
+    $("nowEyebrow").textContent= near===0?"Vertrek":"Nu bij";
+    $("nowTitle").textContent=S[trip.stops[near]].n;
+  } else {
+    $("nowEyebrow").textContent="Onderweg naar";
+    $("nowTitle").textContent=S[trip.stops[next]].n;
+  }
+  if(demo) $("nowEyebrow").textContent+=" · voorbeeldrit";
+  $("bar").style.width=(clamped/total*100).toFixed(1)+"%";
+  const toNext=Math.max(0,trip.cum[next]-clamped);
+  $("stats").innerHTML = `<span>Volgende <b>${esc(S[trip.stops[next]].n)}</b> · <b>${toNext.toFixed(1)}</b> km</span><span>Aankomst <b>${fmtTime(new Date(Date.now()+Math.max(0,minsLeft)*60000+Math.max(0,-pos)/SPEED*60000))}</b></span>`;
+
+  // route
+  const ol=$("route"); ol.innerHTML="";
+  const focusIdx = viewKey ? trip.stops.indexOf(viewKey) : near;
+  trip.stops.forEach((k,i)=>{
+    const li=document.createElement("li");
+    if(trip.cum[i]<clamped-0.3) li.className="passed";
+    if(i===near && pos>=0) li.classList.add("here");
+    if(i===focusIdx) li.classList.add("viewing");
+    if(i<n-1 && trip.cum[i]<=clamped && trip.cum[i+1]>clamped){
+      li.classList.add("half");
+      const frac=(clamped-trip.cum[i])/(trip.cum[i+1]-trip.cum[i]);
+      li.style.setProperty("--h",(50+frac*50).toFixed(0)+"%");
+    }
+    const hasContent=(S[k].f||S[k].q)?"":" · nog geen feiten";
+    li.innerHTML=`<span class="stop"></span><button type="button"><span class="name">${esc(S[k].n)}</span><span class="km">${trip.cum[i].toFixed(0)} km${hasContent}</span></button>`;
+    li.querySelector("button").onclick=()=>{viewKey=k;render()};
+    ol.appendChild(li);
+  });
+
+  renderContent(trip.stops[focusIdx]);
+  $("follow").hidden=!viewKey;
+  $("imHere").hidden=!viewKey || P.src==="gps";
+}
+
+function renderContent(k){
+  const st=S[k], A=ai[k]||{facts:[],quiz:[]};
+  $("stName").textContent=st.n;
+  const box=$("content");
+  if(tab==="facts"){
+    const items=[...(st.f||[]).map(t=>({t,ai:false})),...A.facts.map(t=>({t,ai:true}))];
+    box.innerHTML = items.length
+      ? `<ul class="facts">${items.map(x=>`<li><span class="tag ${x.ai?"ai":""}">${x.ai?"Van Claude":"Funfact"}</span><br>${esc(x.t)}</li>`).join("")}</ul>`
+      : `<p class="empty">Voor ${esc(st.n)} staan nog geen vaste feiten klaar.${sample?" Vraag Claude om iets te vertellen.":""}</p>`;
+  } else {
+    const qs=[...(st.q||[]).map((x,i)=>({...x,id:k+"-v"+i,ai:false})),...A.quiz.map((x,i)=>({...x,id:k+"-ai"+i+"-"+x.q.slice(0,20),ai:true}))];
+    if(!qs.length){ box.innerHTML=`<p class="empty">Nog geen quizvraag voor ${esc(st.n)}.${sample?" Laat Claude er een maken.":""}</p>`; return; }
+    box.innerHTML="";
+    qs.forEach(x=>box.appendChild(quizEl(x)));
+  }
+}
+
+function quizEl(x){
+  const d=document.createElement("div"); d.className="quizitem";
+  d.innerHTML=`<span class="tag ${x.ai?"ai":""}">${x.ai?"Vraag van Claude":"Quizvraag"}</span><p class="q">${esc(x.q)}</p><div class="opts"></div><p class="explain" hidden></p>`;
+  // opties husselen, maar vast per vraag
+  const order=x.o.map((_,i)=>i).sort((a,b)=>((x.q.length*7+a*13)%5)-((x.q.length*7+b*13)%5));
+  const wrap=d.querySelector(".opts"), ex=d.querySelector(".explain");
+  const btns=order.map(i=>{const b=document.createElement("button");b.type="button";b.className="opt";b.textContent=x.o[i];b.dataset.i=i;wrap.appendChild(b);return b});
+  function show(chosen){
+    btns.forEach(b=>{b.disabled=true;const i=+b.dataset.i;if(i===x.a)b.classList.add("right");else if(i===chosen)b.classList.add("wrong")});
+    ex.hidden=false; ex.textContent=(chosen===x.a?"Goed! ":"Helaas. ")+(x.e||"");
+  }
+  if(x.id in answered) show(answered[x.id]);
+  btns.forEach(b=>b.onclick=()=>{const c=+b.dataset.i;answered[x.id]=c;store.set("sq-answered",answered);show(c);updateScore()});
+  // bewaar het juiste antwoord bij de id voor de score
+  quizKeys[x.id]=x.a;
+  return d;
+}
+const quizKeys={};
+function updateScore(){
+  const ids=Object.keys(answered).filter(id=>id in quizKeys);
+  const good=ids.filter(id=>answered[id]===quizKeys[id]).length;
+  $("score").textContent=`${good}/${ids.length} goed`;
+}
+// alle vaste vragen registreren voor de score
+Object.entries(S).forEach(([k,st])=>(st.q||[]).forEach((x,i)=>quizKeys[k+"-v"+i]=x.a));
+
+// ---------- instellingen ----------
+function fillSelects(lineId, fromKey, toKey){
+  const L=LINES.find(l=>l.id===lineId);
+  $("line").innerHTML=LINES.map(l=>`<option value="${l.id}"${l.id===lineId?" selected":""}>${esc(l.n)}</option>`).join("");
+  const opts=k=>L.s.map(s=>`<option value="${s}"${s===k?" selected":""}>${esc(S[s].n)}</option>`).join("");
+  $("from").innerHTML=opts(fromKey); $("to").innerHTML=opts(toKey);
+}
+$("line").onchange=()=>{const L=LINES.find(l=>l.id===$("line").value);fillSelects(L.id,L.s[0],L.s.at(-1))};
+$("start").onclick=()=>{
+  const f=$("from").value,t=$("to").value;
+  if(f===t){$("gpsHint").textContent="Kies een ander eindstation dan je vertrekstation.";return}
+  const [h,m]=($("dep").value||fmtTime(new Date())).split(":").map(Number);
+  const d=new Date(); d.setHours(h,m,0,0);
+  if(d-Date.now()>12*3600e3) d.setDate(d.getDate()-1);
+  trip=buildTrip($("line").value,f,t,d.getTime()); viewKey=null; demo=false;
+  store.set("sq-trip",{l:$("line").value,f,t,t0:trip.t0});
+  $("setup").open=false; setupSum(); render();
+};
+function setupSum(){$("setupSum").textContent=`${S[trip.stops[0]].n} → ${S[trip.stops.at(-1)].n}`}
+$("follow").onclick=()=>{viewKey=null;render()};
+$("imHere").onclick=()=>{const i=trip.stops.indexOf(viewKey);trip.t0=Date.now()-trip.cum[i]/SPEED*60000;store.set("sq-trip",{l:trip.line.id,f:trip.stops[0],t:trip.stops.at(-1),t0:trip.t0});viewKey=null;render()};
+function setTab(t){tab=t;$("tabFacts").setAttribute("aria-selected",t==="facts");$("tabQuiz").setAttribute("aria-selected",t==="quiz");render()}
+$("tabFacts").onclick=()=>setTab("facts"); $("tabQuiz").onclick=()=>setTab("quiz");
+
+// ---------- GPS ----------
+function startGps(){
+  if(!("geolocation" in navigator)){ $("gpsHint").textContent="Dit apparaat heeft geen GPS-toegang. De positie wordt geschat op je vertrektijd."; return; }
+  try{
+    navigator.geolocation.watchPosition(
+      p=>{gps={lat:p.coords.latitude,lon:p.coords.longitude};$("gpsHint").textContent="GPS actief: je positie wordt live gevolgd.";render()},
+      ()=>{gps=null;$("gpsHint").textContent="GPS is hier niet beschikbaar. De positie wordt geschat op je vertrektijd; stel bij met 'Ik ben nu hier'.";render()},
+      {enableHighAccuracy:true,maximumAge:15000,timeout:20000});
+  }catch{ $("gpsHint").textContent="GPS is hier niet beschikbaar. De positie wordt geschat op je vertrektijd."; }
+}
+
+// ---------- Claude-extra's ----------
+let sample=null, busy=false;
+async function askClaude(){
+  const k=viewKey||trip.stops[nearestIdx(Math.max(0,Math.min(trip.cum.at(-1),pos)))];
+  const i=trip.stops.indexOf(k), prev=S[trip.stops[i-1]]?.n, next=S[trip.stops[i+1]]?.n;
+  const known=[...(S[k].f||[]),...(ai[k]?.facts||[])];
+  const prompt=`Je bent een vrolijke maar nauwkeurige reisgids voor treinreizigers in Nederland.
+De reiziger zit in de trein op de lijn "${trip.line.n}" en is nu bij of vlakbij station ${S[k].n}${prev?`, tussen ${prev}`:""}${next?` en ${next}`:""}.
+Geef in het Nederlands:
+- 2 korte funfacts (max 2 zinnen elk) over ${S[k].n} of het landschap langs het spoor hier. Alleen feiten waar je zeker van bent.
+- 1 meerkeuze quizvraag met 4 antwoordopties waarvan er precies 1 klopt, plus een korte uitleg.
+Herhaal deze bekende feiten niet: ${known.length?known.join(" | "):"(geen)"}
+Antwoord met alleen JSON in deze vorm:
+{"facts":["...","..."],"quiz":{"q":"...","o":["...","...","...","..."],"a":0,"e":"..."}}`;
+  busy=true; $("aiBtn").disabled=true; $("aiNote").textContent="Claude denkt na…";
+  try{
+    const r=await sample.json(prompt,{cache:false});
+    const A=ai[k]||(ai[k]={facts:[],quiz:[]});
+    if(Array.isArray(r?.facts)) A.facts.push(...r.facts.filter(t=>typeof t==="string").slice(0,3));
+    const q=r?.quiz;
+    if(q&&typeof q.q==="string"&&Array.isArray(q.o)&&q.o.length>=2&&Number.isInteger(q.a)&&q.a>=0&&q.a<q.o.length) A.quiz.push({q:q.q,o:q.o.map(String),a:q.a,e:String(q.e||"")});
+    $("aiNote").textContent="Toegevoegd. AI kan fouten maken.";
+    render();
+  }catch(e){
+    if(e?.code==="not_granted"||e?.code==="sampling_disabled"||e?.code==="not_declared"){ $("aiRow").hidden=true; }
+    else if(e?.code==="rate_limited"){ $("aiNote").textContent="Even te veel vragen. Probeer het over een minuutje nog eens."; }
+    else if(e?.code!=="cancelled"){ $("aiNote").textContent="Dat lukte niet. Probeer het opnieuw."; }
+  }finally{ busy=false; $("aiBtn").disabled=false; }
+}
+$("aiBtn").onclick=()=>{ if(!busy&&sample) askClaude(); };
+(async()=>{ try{ sample = window.claude ? await window.claude.use("sample") : null; }catch{ sample=null; }
+  $("aiRow").hidden=!sample; if(trip) render(); })();
+
+// ---------- start ----------
+(function init(){
+  const saved=store.get("sq-trip",null);
+  if(saved && LINES.some(l=>l.id===saved.l) && Date.now()-saved.t0<6*3600e3){
+    trip=buildTrip(saved.l,saved.f,saved.t,saved.t0); fillSelects(saved.l,saved.f,saved.t);
+    $("dep").value=fmtTime(new Date(saved.t0));
+  } else {
+    // voorbeeldrit: Den Bosch → Amsterdam, 14 minuten geleden vertrokken
+    trip=buildTrip("A","ht","asd",Date.now()-14*60000); fillSelects("A","ht","asd"); demo=true;
+    $("dep").value=fmtTime(new Date(trip.t0)); $("setup").open=true;
+  }
+  setupSum(); render(); updateScore(); startGps();
+  setInterval(render,15000);
+})();
+</script>
+
+</body>
+</html>
