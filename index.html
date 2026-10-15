@@ -58,6 +58,7 @@ h1 span{font-weight:400}
 .track{position:relative;height:4px;background:rgba(255,255,255,.3);border-radius:2px;margin-top:6px}
 .track i{position:absolute;left:0;top:0;bottom:0;background:#ffffff;border-radius:2px;transition:width .6s}
 .track b{position:absolute;top:50%;width:22px;height:12px;margin:-6px 0 0 -11px;background:var(--yellow);border:2px solid #ffffff;border-radius:4px 7px 7px 4px;transition:left .6s}
+.signstats .late{color:#ff8a9a;font-weight:700}
 .signstats{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.78rem;font-variant-numeric:tabular-nums;opacity:.9}
 
 /* portaal met deuren */
@@ -194,9 +195,11 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       <label>Van<select id="from"></select></label>
       <label>Naar<select id="to"></select></label>
       <label>Vertrektijd<input type="time" id="dep"></label>
-      <label style="justify-content:flex-end"><button class="btn" id="start" type="button">Start rit</button></label>
+      <label>Treinnummer <span style="font-weight:400;color:var(--muted)">(optioneel)</span><input type="text" id="trainNr" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="bijv. 3541"></label>
+      <label class="full"><button class="btn" id="start" type="button">Start rit</button></label>
     </div>
     <p class="hint" id="gpsHint"></p>
+    <p class="hint" id="liveHint"></p>
   </details>
 
   <details class="panel">
@@ -344,6 +347,9 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- state ----------
 let trip=null, pos=0, gps=null, demo=false, nearI=0;
+// Live NS-tijden via je eigen Cloudflare Worker (zie worker.js). Vul hier de Worker-URL in, zonder / aan het eind.
+const NS_PROXY_URL = "";
+let live=null, liveMsg="", trainNr=store.get("sq-train","");
 const ai={};
 const seen=new Set(store.get("sq2-seen",[]));
 let liked=store.get("sq2-liked",[]);           // [{id,st,t}]
@@ -373,8 +379,46 @@ function project(p){
   }
   return best;
 }
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g,"");
+function kmOf(name){const i=trip.stops.findIndex(k=>norm(S[k].n)===norm(name));return i<0?null:trip.cum[i]}
+function liveStops(){
+  if(!live) return [];
+  return live.stops.filter(s=>!s.cancelled).map(s=>({...s,km:kmOf(s.name),arr:Date.parse(s.arrActual),dep:Date.parse(s.depActual)}));
+}
+function liveKm(){
+  const st=liveStops().filter(s=>s.km!=null); if(st.length<2) return null;
+  const now=Date.now();
+  for(let i=0;i<st.length;i++){
+    const s=st[i]; if(isNaN(s.arr)||now>=s.arr) continue;
+    if(i===0) return s.km-(s.arr-now)/60000*SPEED;
+    const p=st[i-1], t0=isNaN(p.dep)?p.arr:p.dep;
+    if(isNaN(t0)||now<=t0) return p.km;
+    return p.km+(s.km-p.km)*Math.min(1,(now-t0)/(s.arr-t0));
+  }
+  return st.at(-1).km;
+}
+function nextLiveStop(){
+  const now=Date.now();
+  return liveStops().find(s=>!s.passing&&!isNaN(s.arr)&&s.arr>now)||null;
+}
+async function fetchLive(){
+  if(!trainNr){live=null;liveMsg="";$("liveHint").textContent="";return}
+  if(!NS_PROXY_URL){live=null;$("liveHint").textContent="Live NS-tijden zijn nog niet gekoppeld (Worker-URL ontbreekt).";return}
+  try{
+    const r=await fetch(`${NS_PROXY_URL}/journey?train=${encodeURIComponent(trainNr)}`);
+    const j=await r.json().catch(()=>({error:"Onleesbaar antwoord"}));
+    if(!r.ok||j.error) throw new Error(j.error||("status "+r.status));
+    if(!j.stops?.length) throw new Error("geen haltes gevonden voor trein "+trainNr);
+    live=j; const m=j.stops.filter(x=>kmOf(x.name)!=null).length;
+    $("liveHint").textContent=m>=2?`Live NS-tijden voor trein ${trainNr} (bijgewerkt ${fmtTime(new Date())}).`:`Trein ${trainNr} gevonden, maar hij rijdt niet over jouw gekozen route.`;
+  }catch(e){
+    live=null; $("liveHint").textContent=`Live NS-tijden niet beschikbaar: ${e.message||"geen verbinding"}.`;
+  }
+  render();
+}
 function computePos(){
   if(gps){const pr=project(gps); if(pr.d<15) return {km:pr.km,src:"gps"};}
+  const lk=liveKm(); if(lk!=null) return {km:lk,src:"ns"};
   return {km:(Date.now()-trip.t0)/60000*SPEED,src:"time"};
 }
 function nearestIdx(km){let b=0;trip.cum.forEach((c,i)=>{if(Math.abs(c-km)<Math.abs(trip.cum[b]-km))b=i});return b}
@@ -544,8 +588,8 @@ function render(){
   let next=trip.cum.findIndex(x=>x>c+.3); if(next<0) next=n-1;
   const prevNear=nearI; nearI=nearestIdx(c);
   const at=Math.abs(trip.cum[nearI]-c)<1.5;
-  $("mode").classList.toggle("warn",P.src!=="gps");
-  $("modeTxt").textContent=P.src==="gps"?"GPS live":"Tijd-schatting";
+  $("mode").classList.toggle("warn",P.src==="time");
+  $("modeTxt").textContent=P.src==="gps"?(live?"GPS + NS-tijden":"GPS live"):P.src==="ns"?"NS-tijden":"Tijd-schatting";
   let eb,title;
   if(pos<0){eb="Nog niet vertrokken";title=`Vertrek uit ${S[trip.stops[0]].n} over ${Math.ceil(-pos/SPEED)} min`}
   else if(c>=total-.3){eb="Aangekomen";title=S[trip.stops[n-1]].n}
@@ -556,7 +600,15 @@ function render(){
   const pct=(c/total*100).toFixed(1)+"%";
   $("trackFill").style.width=pct; $("trackTrain").style.left=pct;
   const mins=(total-c)/SPEED+Math.max(0,-pos)/SPEED;
-  $("stats").innerHTML=`<span>${esc(S[trip.stops[0]].n)} → ${esc(S[trip.stops[n-1]].n)}</span><span>Aankomst ${fmtTime(new Date(Date.now()+mins*60000))}</span>`;
+  const nl=nextLiveStop(), destL=liveStops().find(x=>norm(x.name)===norm(S[trip.stops[n-1]].n));
+  const late=d=>d>0?` <b class="late">+${d}</b>`:"";
+  if(nl){
+    const inMin=Math.max(0,Math.round((nl.arr-Date.now())/60000));
+    $("stats").innerHTML=`<span>${esc(nl.name)} ${fmtTime(new Date(nl.arr))}${late(nl.delayMin)} · over ${inMin} min</span>`+
+      (destL&&!isNaN(destL.arr)?`<span>Aankomst ${esc(S[trip.stops[n-1]].n)} ${fmtTime(new Date(destL.arr))}${late(destL.delayMin)}</span>`:"");
+  } else {
+    $("stats").innerHTML=`<span>${esc(S[trip.stops[0]].n)} → ${esc(S[trip.stops[n-1]].n)}</span><span>Aankomst ca. ${fmtTime(new Date(Date.now()+mins*60000))}</span>`;
+  }
   const ol=$("route"); ol.innerHTML="";
   trip.stops.forEach((k,i)=>{
     const li=document.createElement("li");
@@ -565,7 +617,7 @@ function render(){
     if(i<n-1&&trip.cum[i]<=c&&trip.cum[i+1]>c){li.classList.add("half");li.style.setProperty("--h",(50+(c-trip.cum[i])/(trip.cum[i+1]-trip.cum[i])*50).toFixed(0)+"%")}
     li.innerHTML=`<span class="stop"></span><button type="button"><span class="name">${esc(S[k].n)}</span><span class="km">${trip.cum[i].toFixed(0)} km</span></button>`;
     li.querySelector("button").onclick=()=>{
-      if(P.src==="gps"){$("routeSum").textContent="GPS volgt je al live";return}
+      if(P.src!=="time"){$("routeSum").textContent=P.src==="gps"?"GPS volgt je al live":"NS-tijden volgen je al live";return}
       trip.t0=Date.now()-trip.cum[i]/SPEED*60000; demo=false; saveTrip();
       $("led").innerHTML=`Positie bijgesteld: je bent bij <b>${esc(S[k].n)}</b>.`; render(); renderDeck(true);
     };
@@ -591,6 +643,7 @@ $("start").onclick=()=>{
   const [h,m]=($("dep").value||fmtTime(new Date())).split(":").map(Number);
   const d=new Date(); d.setHours(h,m,0,0); if(d-Date.now()>12*3600e3) d.setDate(d.getDate()-1);
   trip=buildTrip($("line").value,f,t,d.getTime()); demo=false; saveTrip();
+  trainNr=($("trainNr").value||"").replace(/\D/g,""); store.set("sq-train",trainNr); fetchLive();
   $("setup").open=false; setupSum(); nearI=-1; render();
   $("led").innerHTML=`Goede reis naar <b>${esc(S[t].n)}</b>. Swipe maar!`;
 };
@@ -648,7 +701,9 @@ $("aiBtn").onclick=askClaude;
   }
   $("dep").value=fmtTime(new Date(trip.t0));
   setSound(soundOn); setupSum(); updateScore(); renderSaved(); render(); renderDeck(true); startGps();
+  $("trainNr").value=trainNr; fetchLive();
   setInterval(render,15000);
+  setInterval(()=>{ if(document.visibilityState==="visible") fetchLive(); },60000);
 })();
 </script>
 
