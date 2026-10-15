@@ -5,105 +5,140 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Spoorquiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: één kolom zoals een lijnenkaart — "nu"-paneel bovenaan, inhoud in het midden, de route als verticale spoorlijn onderaan */
+/* Layout: één scherm als een treinportaal — stationsbord bovenaan, de kaarten achter een deuropening met schuifdeuren, daaronder het informatiescherm en de knoppen; rit en route volgen eronder */
 :root{
-  --bg:#eef1f6; --surface:#ffffff; --ink:#121a2b; --muted:#5b6578; --line:#d5dbe6;
-  --rail:#1d47c8; --rail-soft:#e3e9fb; --signal:#e0552b; --ok:#1f8a4c; --ok-soft:#e2f4e9; --bad:#c23a2b; --bad-soft:#fbe7e3;
-  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
-  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --bg:#e9edf4; --surface:#ffffff; --ink:#111a2c; --muted:#5a6479; --line:#d3dae6;
+  --rail:#1c46c4; --rail-ink:#ffffff; --rail-soft:#e1e8fb; --signal:#e2572c;
+  --frame:#2b3242; --seal:#0f131c; --door:#cfd6e2; --door-2:#b7c0d0; --glass:#8fa6c9;
+  --led-bg:#121722; --led:#ffb547; --ok:#1f8a4c; --bad:#c43a2b;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0d1220; --surface:#161d30; --ink:#e8ecf5; --muted:#9aa4b8; --line:#2a3350;
-  --rail:#7c9cff; --rail-soft:#1f2a4d; --signal:#ff8a5c; --ok:#5fd18f; --ok-soft:#173326; --bad:#ff7a6b; --bad-soft:#3a1d1b; color-scheme:dark}}
+  --bg:#0c111d; --surface:#171e31; --ink:#e9edf6; --muted:#9aa4ba; --line:#28314c;
+  --rail:#3d63e0; --rail-ink:#ffffff; --rail-soft:#1d284a; --signal:#ff8a5c;
+  --frame:#1b2131; --seal:#05070c; --door:#59647a; --door-2:#485267; --glass:#2e4266;
+  --led-bg:#07090f; --led:#ffbf5e; --ok:#5fd18f; --bad:#ff7a6b; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0d1220; --surface:#161d30; --ink:#e8ecf5; --muted:#9aa4b8; --line:#2a3350;
-  --rail:#7c9cff; --rail-soft:#1f2a4d; --signal:#ff8a5c; --ok:#5fd18f; --ok-soft:#173326; --bad:#ff7a6b; --bad-soft:#3a1d1b; color-scheme:dark}
+  --bg:#0c111d; --surface:#171e31; --ink:#e9edf6; --muted:#9aa4ba; --line:#28314c;
+  --rail:#3d63e0; --rail-ink:#ffffff; --rail-soft:#1d284a; --signal:#ff8a5c;
+  --frame:#1b2131; --seal:#05070c; --door:#59647a; --door-2:#485267; --glass:#2e4266;
+  --led-bg:#07090f; --led:#ffbf5e; --ok:#5fd18f; --bad:#ff7a6b; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
-.wrap{max-width:640px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-h1{font-family:var(--f-display);font-weight:800;font-size:1.9rem;letter-spacing:-.02em;margin:0;line-height:1}
-h1 span{color:var(--rail)}
-.score{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--rail-soft);color:var(--rail)}
-.chip.warn{background:var(--bad-soft);color:var(--signal)}
-.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.wrap{max-width:560px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--rail);outline-offset:2px}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
 
-/* rit instellen */
-details.setup summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
-details.setup summary::-webkit-details-marker{display:none}
-details.setup summary .sum{font-weight:400;color:var(--muted);font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:800;font-size:1.7rem;letter-spacing:-.02em;margin:0;line-height:1}
+h1 span{color:var(--rail)}
+.hright{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.score{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--rail-soft);color:var(--rail)}
+.chip.warn{color:var(--signal)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 10px;font-size:.75rem;font-weight:700;color:var(--muted)}
+.iconbtn[aria-pressed="true"]{color:var(--rail);border-color:var(--rail)}
+
+/* stationsbord */
+.sign{background:var(--rail);color:var(--rail-ink);border-radius:10px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--rail-ink) 85%,transparent)}
+.sign .eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.85}
+.sign h2{font-family:var(--f-display);font-weight:800;font-size:1.55rem;margin:0;line-height:1.05;text-wrap:balance}
+.track{position:relative;height:4px;background:color-mix(in srgb,var(--rail-ink) 30%,transparent);border-radius:2px;margin-top:6px}
+.track i{position:absolute;left:0;top:0;bottom:0;background:var(--rail-ink);border-radius:2px;transition:width .6s}
+.track b{position:absolute;top:50%;width:22px;height:12px;margin:-6px 0 0 -11px;background:var(--signal);border:2px solid var(--rail-ink);border-radius:4px 7px 7px 4px;transition:left .6s}
+.signstats{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.78rem;font-variant-numeric:tabular-nums;opacity:.9}
+
+/* portaal met deuren */
+.stage{position:relative;height:clamp(380px,58vh,500px);background:var(--frame);border-radius:20px 20px 10px 10px;padding:10px;box-shadow:inset 0 0 0 4px var(--seal)}
+.deck{position:absolute;inset:10px;border-radius:12px;overflow:hidden}
+.card{position:absolute;inset:0;background:var(--surface);border-radius:12px;display:flex;flex-direction:column;touch-action:pan-y;user-select:none;-webkit-user-select:none;will-change:transform}
+.card.back1{transform:translateY(8px) scale(.97);filter:brightness(.94)}
+.card.back2{transform:translateY(16px) scale(.94);filter:brightness(.88)}
+.card.top{cursor:grab;z-index:3}
+.card.top.dragging{cursor:grabbing}
+.band{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.band .kind{color:var(--rail)}
+.card.tf .band .kind{color:var(--signal)}
+.band .where{color:var(--muted);text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbody{flex:1;padding:22px 20px;display:flex;flex-direction:column;justify-content:center;gap:16px;min-height:0;overflow:auto}
+.cbody .big{font-family:var(--f-display);font-weight:600;font-size:clamp(1.25rem,4.6vw,1.55rem);line-height:1.25;margin:0;text-wrap:pretty}
+.answer{border:2px dashed var(--line);border-radius:12px;padding:12px 14px}
+.answer small{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.answer strong{font-size:1.2rem}
+.ai-tag{color:var(--signal)}
+.stamp{position:absolute;top:58px;padding:4px 12px;border:3px solid;border-radius:8px;font-family:var(--f-display);font-weight:800;font-size:1.4rem;letter-spacing:.04em;text-transform:uppercase;opacity:0;pointer-events:none}
+.stamp.yes{left:18px;color:var(--ok);transform:rotate(-12deg)}
+.stamp.no{right:18px;color:var(--bad);transform:rotate(12deg)}
+.cfoot{padding:0 20px 16px;font-size:.78rem;color:var(--muted)}
+.empty .cbody{align-items:flex-start}
+.empty .row{display:flex;gap:10px;flex-wrap:wrap}
+
+.doors{position:absolute;inset:10px;pointer-events:none;z-index:10;overflow:hidden;border-radius:12px}
+.door{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(90deg,var(--door),var(--door-2));transition:transform .45s cubic-bezier(.5,0,.25,1)}
+.door.l{left:0;transform:translateX(-102%);border-right:5px solid var(--seal)}
+.door.r{right:0;transform:translateX(102%);border-left:5px solid var(--seal);background:linear-gradient(270deg,var(--door),var(--door-2))}
+.door::before{content:"";position:absolute;left:18%;right:18%;top:10%;height:42%;border-radius:10px;background:linear-gradient(160deg,color-mix(in srgb,var(--glass) 70%,#fff 30%),var(--glass));box-shadow:inset 0 0 0 4px var(--seal)}
+.door::after{content:"";position:absolute;left:0;right:0;bottom:12%;height:8px;background:var(--signal)}
+.door .knob{position:absolute;top:60%;width:28px;height:28px;border-radius:50%;background:var(--seal);box-shadow:inset 0 0 0 4px var(--ok)}
+.door.l .knob{right:14px}.door.r .knob{left:14px}
+.stage.closed .door{transform:none}
+.doors .sigtext{position:absolute;left:0;right:0;top:56%;text-align:center;z-index:2;font-family:var(--f-mono);font-weight:700;font-size:.8rem;letter-spacing:.1em;color:var(--seal);opacity:0;transition:opacity .2s .25s}
+.stage.closed .sigtext{opacity:.75}
+
+/* informatiescherm */
+.led{background:var(--led-bg);color:var(--led);font-family:var(--f-mono);font-size:.86rem;line-height:1.45;border-radius:8px;padding:10px 14px;min-height:3.4em;box-shadow:inset 0 0 0 2px var(--seal)}
+.led b{color:var(--led)}
+.led .ok{color:var(--ok)}.led .bad{color:var(--bad)}
+
+.controls{display:flex;justify-content:center;align-items:center;gap:28px}
+.round{width:68px;height:68px;border-radius:50%;border:0;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 16px color-mix(in srgb,var(--ink) 14%,transparent);display:grid;place-items:center;transition:transform .12s}
+.round:active{transform:scale(.92)}
+.round svg{width:30px;height:30px}
+.round.no{color:var(--bad)}.round.yes{color:var(--ok)}
+.round:disabled{opacity:.4;cursor:default}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.aiLink{border:0;background:none;color:var(--rail);font-weight:700;font-size:.9rem;align-self:center;padding:4px}
+.aiLink:disabled{color:var(--muted)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+details summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary .sum{font-weight:400;color:var(--muted);font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.form label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;min-width:0}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;min-width:0}
 .form .full{grid-column:1/-1}
 select,input{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);width:100%}
-.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--rail);color:var(--surface)}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--rail);color:var(--rail-ink)}
 .btn.ghost{background:transparent;color:var(--rail);border:1px solid var(--line)}
-.btn:disabled{opacity:.5;cursor:default}
-.hint{font-size:.85rem;color:var(--muted);margin:10px 0 0}
+.hint{font-size:.84rem;color:var(--muted);margin:10px 0 0}
 
-/* nu-paneel */
-.now{display:flex;flex-direction:column;gap:10px}
-.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
-.now h2{font-family:var(--f-display);font-weight:800;font-size:1.6rem;margin:0;line-height:1.1;text-wrap:balance}
-.bar{height:8px;background:var(--rail-soft);border-radius:99px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--rail);border-radius:99px;transition:width .6s}
-.stats{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.stats b{color:var(--ink);font-weight:500}
-
-/* inhoud */
-.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:-4px 0 14px}
-.tab{border:0;background:none;padding:8px 12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
-.tab[aria-selected="true"]{color:var(--ink);border-color:var(--signal)}
-.stationhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.stationhead h3{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:0}
-.link{background:none;border:0;color:var(--rail);font-weight:700;padding:0;font-size:.9rem}
-.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.facts li{padding:12px 14px;background:var(--bg);border-radius:10px;min-width:0}
-.tag{display:inline-block;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--rail);margin-bottom:2px}
-.tag.ai{color:var(--signal)}
-.q{font-weight:700;margin:0 0 10px}
-.opts{display:grid;gap:8px}
-.opt{text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 14px}
-.opt:hover:not(:disabled){border-color:var(--rail)}
-.opt.right{background:var(--ok-soft);border-color:var(--ok);color:var(--ink)}
-.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
-.opt:disabled{cursor:default}
-.explain{margin:10px 0 0;font-size:.92rem;color:var(--muted)}
-.quizitem+.quizitem{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line)}
-.ai-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
-.ai-note{font-size:.8rem;color:var(--muted)}
-.empty{color:var(--muted);margin:0}
-
-/* route als spoorlijn */
-.route{list-style:none;margin:0;padding:0;position:relative}
+.route{list-style:none;margin:10px 0 0;padding:0}
 .route li{position:relative;padding-left:34px}
 .route li::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:4px;background:var(--rail-soft)}
-.route li:first-child::before{top:50%}
-.route li:last-child::before{bottom:50%}
+.route li:first-child::before{top:50%}.route li:last-child::before{bottom:50%}
 .route li.passed::before{background:var(--rail)}
 .route li.half::before{background:linear-gradient(var(--rail) var(--h,50%),var(--rail-soft) var(--h,50%))}
-.route button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:10px;width:100%;padding:9px 0;box-sizing:border-box}
-.route button:focus-visible{outline:3px solid var(--rail);outline-offset:2px;border-radius:6px}
+.route button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:10px;width:100%;padding:8px 0;box-sizing:border-box}
+.route button:focus-visible{outline:3px solid var(--signal);outline-offset:2px;border-radius:6px}
 .route .stop{position:absolute;left:5px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--surface);border:3px solid var(--rail-soft);z-index:1}
 .route li.passed .stop,.route li.half .stop{border-color:var(--rail)}
-.route li.here .stop{background:var(--signal);border-color:var(--signal);box-shadow:0 0 0 5px color-mix(in srgb,var(--signal) 25%,transparent)}
-.route li.viewing .name{text-decoration:underline;text-decoration-color:var(--signal);text-decoration-thickness:2px;text-underline-offset:4px}
+.route li.here .stop{background:var(--signal);border-color:var(--signal)}
 .route .name{font-weight:700}
 .route li.passed .name{color:var(--muted);font-weight:400}
-.route .km{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.train{position:absolute;left:3px;width:20px;height:20px;margin-top:-10px;border-radius:6px;background:var(--signal);z-index:2;transition:top .6s}
-.train::after{content:"";position:absolute;inset:6px 4px auto 4px;height:4px;background:var(--surface);border-radius:2px}
-.foot{font-size:.8rem;color:var(--muted);text-align:center}
-@media (max-width:420px){.form{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.bar i,.train{transition:none}}
+.route .km{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.saved{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.saved li{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.saved li small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.eyebrow2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.foot{font-size:.78rem;color:var(--muted);text-align:center;margin:0}
+@media (max-width:420px){.form{grid-template-columns:1fr}.round{width:60px;height:60px}}
+@media (prefers-reduced-motion:reduce){.door,.track i,.track b,.round{transition:none}}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 </head>
@@ -112,13 +147,38 @@ select,input{background:var(--bg);border:1px solid var(--line);border-radius:10p
 <div class="wrap">
   <header>
     <h1>Spoor<span>quiz</span></h1>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <span class="score" id="score">0/0 goed</span>
+    <div class="hright">
+      <span class="score" id="score">0/0 goed · 0 bewaard</span>
+      <button class="iconbtn" id="sound" type="button" aria-pressed="false">Gong uit</button>
       <span class="chip" id="mode"><span class="dot"></span><span id="modeTxt">Tijd-schatting</span></span>
     </div>
   </header>
 
-  <details class="setup panel" id="setup">
+  <section class="sign" aria-live="polite">
+    <span class="eyebrow" id="nowEyebrow">…</span>
+    <h2 id="nowTitle">…</h2>
+    <div class="track"><i id="trackFill" style="width:0"></i><b id="trackTrain" style="left:0"></b></div>
+    <div class="signstats" id="stats"></div>
+  </section>
+
+  <section class="stage" id="stage">
+    <div class="deck" id="deck"></div>
+    <div class="doors" aria-hidden="true">
+      <div class="door l"><span class="knob"></span></div>
+      <div class="door r"><span class="knob"></span></div>
+      <div class="sigtext">DEUREN SLUITEN</div>
+    </div>
+  </section>
+
+  <div class="led" id="led" aria-live="polite">Swipe naar rechts om een feit te bewaren, naar links voor het volgende.</div>
+
+  <div class="controls">
+    <div class="ctl"><button class="round no" id="btnNo" type="button" aria-label="Naar links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span id="lblNo">Volgende</span></div>
+    <div class="ctl"><button class="round yes" id="btnYes" type="button" aria-label="Naar rechts"><svg id="yesIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><span id="lblYes">Bewaren</span></div>
+  </div>
+  <button class="aiLink" id="aiBtn" type="button" hidden>Meer kaarten van Claude over deze plek</button>
+
+  <details class="panel" id="setup">
     <summary><span>Jouw rit</span><span class="sum" id="setupSum"></span></summary>
     <div class="form">
       <label class="full">Lijn<select id="line"></select></label>
@@ -130,42 +190,21 @@ select,input{background:var(--bg);border:1px solid var(--line);border-radius:10p
     <p class="hint" id="gpsHint"></p>
   </details>
 
-  <section class="panel now" aria-live="polite">
-    <span class="eyebrow" id="nowEyebrow">Voorbeeldrit</span>
-    <h2 id="nowTitle">…</h2>
-    <div class="bar"><i id="bar" style="width:0"></i></div>
-    <div class="stats" id="stats"></div>
-  </section>
+  <details class="panel">
+    <summary><span>Route</span><span class="sum" id="routeSum">Tik op een station als je daar nu bent</span></summary>
+    <ol class="route" id="route"></ol>
+  </details>
 
-  <section class="panel">
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="tabFacts" aria-selected="true" type="button">Funfacts</button>
-      <button class="tab" role="tab" id="tabQuiz" aria-selected="false" type="button">Quiz</button>
-    </div>
-    <div class="stationhead">
-      <h3 id="stName">…</h3>
-      <div style="display:flex;gap:14px">
-        <button class="link" id="follow" type="button" hidden>Volg de trein</button>
-        <button class="link" id="imHere" type="button" hidden>Ik ben nu hier</button>
-      </div>
-    </div>
-    <div id="content"></div>
-    <div class="ai-row" id="aiRow" hidden>
-      <button class="btn ghost" id="aiBtn" type="button">Meer van Claude</button>
-      <span class="ai-note" id="aiNote">Nieuwe feiten en een quizvraag over deze plek. AI kan fouten maken.</span>
-    </div>
-  </section>
+  <details class="panel">
+    <summary><span>Bewaarde feiten</span><span class="sum" id="savedSum">0</span></summary>
+    <ul class="saved" id="saved"></ul>
+    <p class="hint"><button class="btn ghost" id="reset" type="button">Alle kaarten opnieuw tonen</button></p>
+  </details>
 
-  <section class="panel">
-    <span class="eyebrow">Route · tik op een station om erover te lezen</span>
-    <ol class="route" id="route" style="margin-top:10px"></ol>
-  </section>
-
-  <p class="foot">Positie zonder GPS is een schatting op basis van je vertrektijd. Tik bij een station op "Ik ben nu hier" om bij te stellen.</p>
+  <p class="foot">Zonder GPS schat de app je positie op basis van de vertrektijd. Klopt het niet? Open de route en tik op het station waar je nu bent.</p>
 </div>
 
 <script>
-// ---------- Stations: coördinaten + vaste funfacts en quizvragen ----------
 const S = {
   ehv:{n:"Eindhoven Centraal",lat:51.4433,lon:5.4814,
     f:["Philips begon hier in 1891 met het maken van gloeilampen. Daarom heet Eindhoven ook wel 'Lichtstad'.","De voetbalclub PSV is ooit opgericht als Philips Sport Vereniging.","Het Evoluon, het gebouw dat eruitziet als een geland ufo, werd in 1966 door Philips geopend als technologiemuseum.","Strijp-S was vroeger een fabrieksterrein van Philips en is nu een wijk met woningen, ateliers en evenementen."],
@@ -283,33 +322,36 @@ const LINES = [
 ];
 const SPEED = 80/60; // km (hemelsbreed) per minuut, inclusief stops — benadert intercitytijden
 
+
 // ---------- helpers ----------
 const $ = id => document.getElementById(id);
 const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 function hav(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r;const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 const fmtTime = d => d.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const hash = s => {let x=7;for(const c of s)x=(x*31+c.charCodeAt(0))|0;return Math.abs(x)};
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- state ----------
-let trip = null;          // {line, stops:[keys], cum:[km], t0:ms}
-let demo = false;
-let pos = 0;              // km langs de route
-let gps = null;           // laatste GPS-fix
-let viewKey = null;       // handmatig gekozen station (null = volg trein)
-let tab = "facts";
-const ai = {};            // per station: {facts:[], quiz:[]}
-let answered = store.get("sq-answered",{}); // id -> true/false
+let trip=null, pos=0, gps=null, demo=false, nearI=0;
+const ai={};
+const seen=new Set(store.get("sq2-seen",[]));
+let liked=store.get("sq2-liked",[]);           // [{id,st,t}]
+let results=store.get("sq2-res",{});           // id -> true/false
+let soundOn=store.get("sq2-sound",false);
+let busy=false, dragging=false, shownTop=undefined, currentCards=[];
 
 function buildTrip(lineId, fromKey, toKey, t0){
-  const L = LINES.find(l=>l.id===lineId);
+  const L=LINES.find(l=>l.id===lineId);
   let i=L.s.indexOf(fromKey), j=L.s.indexOf(toKey);
-  let stops = i<=j ? L.s.slice(i,j+1) : L.s.slice(j,i+1).reverse();
+  const stops = i<=j ? L.s.slice(i,j+1) : L.s.slice(j,i+1).reverse();
   const cum=[0]; for(let k=1;k<stops.length;k++) cum.push(cum[k-1]+hav(S[stops[k-1]],S[stops[k]]));
   return {line:L, stops, cum, t0};
 }
 
 // ---------- positie ----------
-function project(p){ // GPS-punt → km langs de route
+function project(p){
   const lat0=p.lat*Math.PI/180, X=q=>q.lon*Math.cos(lat0)*111.32, Y=q=>q.lat*110.57;
   let best={d:Infinity,km:0};
   for(let k=0;k<trip.stops.length-1;k++){
@@ -323,192 +365,280 @@ function project(p){ // GPS-punt → km langs de route
   return best;
 }
 function computePos(){
-  if(gps){ const pr=project(gps); if(pr.d<15) return {km:pr.km,src:"gps"}; }
-  return {km:(Date.now()-trip.t0)/60000*SPEED, src:"time"};
+  if(gps){const pr=project(gps); if(pr.d<15) return {km:pr.km,src:"gps"};}
+  return {km:(Date.now()-trip.t0)/60000*SPEED,src:"time"};
 }
 function nearestIdx(km){let b=0;trip.cum.forEach((c,i)=>{if(Math.abs(c-km)<Math.abs(trip.cum[b]-km))b=i});return b}
 
-// ---------- render ----------
-function render(){
-  const P=computePos(), total=trip.cum.at(-1);
-  pos=P.km;
-  const clamped=Math.max(0,Math.min(total,pos));
-  const n=trip.stops.length;
-  let next=trip.cum.findIndex(c=>c>clamped+0.3); if(next<0) next=n-1;
-  const near=nearestIdx(clamped);
-  const atStation=Math.abs(trip.cum[near]-clamped)<1.5;
-
-  // modus
-  $("mode").classList.toggle("warn", P.src!=="gps");
-  $("modeTxt").textContent = P.src==="gps" ? "GPS live" : "Tijd-schatting";
-
-  // nu-paneel
-  const minsLeft=(total-clamped)/SPEED;
-  if(pos<0){
-    $("nowEyebrow").textContent="Nog niet vertrokken";
-    $("nowTitle").textContent=`Vertrek uit ${S[trip.stops[0]].n} over ${Math.ceil(-pos/SPEED)} min`;
-  } else if(clamped>=total-0.3){
-    $("nowEyebrow").textContent="Aangekomen";
-    $("nowTitle").textContent=`Welkom in ${S[trip.stops[n-1]].n}`;
-  } else if(atStation){
-    $("nowEyebrow").textContent= near===0?"Vertrek":"Nu bij";
-    $("nowTitle").textContent=S[trip.stops[near]].n;
-  } else {
-    $("nowEyebrow").textContent="Onderweg naar";
-    $("nowTitle").textContent=S[trip.stops[next]].n;
+// ---------- kaarten ----------
+function cardsFor(k){
+  const st=S[k], A=ai[k]||{facts:[],quiz:[]};
+  const facts=[...(st.f||[]).map(t=>({t,ai:false})),...A.facts.map(t=>({t,ai:true}))]
+    .map(x=>({type:"fact",id:"f:"+k+":"+hash(x.t),k,text:x.t,ai:x.ai}));
+  const quiz=[...(st.q||[]).map(q=>({...q,ai:false})),...A.quiz.map(q=>({...q,ai:true}))].map(q=>{
+    const id="q:"+k+":"+hash(q.q), h=hash(id+"x"), showRight=h%2===0;
+    const wrong=q.o.map((_,i)=>i).filter(i=>i!==q.a);
+    const shown=showRight?q.a:wrong[h%wrong.length];
+    return {type:"tf",id,k,q:q.q,shown:q.o[shown],correct:shown===q.a,right:q.o[q.a],e:q.e||"",ai:q.ai};
+  });
+  const out=[]; for(let i=0;i<Math.max(facts.length,quiz.length);i++){ if(facts[i])out.push(facts[i]); if(quiz[i])out.push(quiz[i]); }
+  return out;
+}
+function deckList(){
+  const start = pos<0 ? 0 : nearI;
+  return trip.stops.slice(start).flatMap(cardsFor).filter(c=>!seen.has(c.id));
+}
+function whereLabel(k){
+  const i=trip.stops.indexOf(k), d=trip.cum[i]-Math.max(0,pos);
+  if(i===nearI && Math.abs(d)<1.5) return S[k].n+" · hier";
+  return S[k].n+(d>0?` · over ${d.toFixed(0)} km`:"");
+}
+function cardHTML(c,cls){
+  if(c.type==="fact") return `<div class="card ${cls}" data-id="${esc(c.id)}">
+    <div class="band"><span class="kind">${c.ai?'<span class="ai-tag">Van Claude</span>':"Funfact"}</span><span class="where">${esc(whereLabel(c.k))}</span></div>
+    <div class="cbody"><p class="big">${esc(c.text)}</p></div>
+    <div class="cfoot">Rechts = bewaren · Links = volgende</div>
+    <span class="stamp yes">Bewaren</span><span class="stamp no">Volgende</span></div>`;
+  return `<div class="card tf ${cls}" data-id="${esc(c.id)}">
+    <div class="band"><span class="kind">${c.ai?'<span class="ai-tag">Claude vraagt</span>':"Klopt dit?"}</span><span class="where">${esc(whereLabel(c.k))}</span></div>
+    <div class="cbody"><p class="big">${esc(c.q)}</p><div class="answer"><small>Antwoord</small><strong>${esc(c.shown)}</strong></div></div>
+    <div class="cfoot">Rechts = klopt · Links = klopt niet</div>
+    <span class="stamp yes">Klopt</span><span class="stamp no">Klopt niet</span></div>`;
+}
+function renderDeck(force){
+  if(dragging||(busy&&!force)) return;
+  const list=deckList(), top=list[0];
+  const topId=top?top.id:null;
+  if(!force && topId===shownTop) return;
+  shownTop=topId; currentCards=list.slice(0,3);
+  const deck=$("deck");
+  if(!top){
+    const last=S[trip.stops.at(-1)].n;
+    deck.innerHTML=`<div class="card top empty"><div class="band"><span class="kind">Alles gezien</span><span class="where">${esc(S[trip.stops[Math.max(0,nearI)]].n)}</span></div>
+      <div class="cbody"><p class="big">Je hebt alle kaarten tot ${esc(last)} gezien.</p>
+      <p style="margin:0;color:var(--muted)">${sample?"Laat Claude nieuwe kaarten maken over waar je nu bent, of begin opnieuw.":"Begin opnieuw, of wacht tot je bij een nieuw stuk route bent."}</p>
+      <div class="row">${sample?'<button class="btn" type="button" data-act="ai">Meer van Claude</button>':""}<button class="btn ghost" type="button" data-act="reset">Opnieuw beginnen</button></div></div></div>`;
+    deck.querySelector('[data-act="ai"]')?.addEventListener("click",askClaude);
+    deck.querySelector('[data-act="reset"]').addEventListener("click",resetSeen);
+    setControls(null); return;
   }
-  if(demo) $("nowEyebrow").textContent+=" · voorbeeldrit";
-  $("bar").style.width=(clamped/total*100).toFixed(1)+"%";
-  const toNext=Math.max(0,trip.cum[next]-clamped);
-  $("stats").innerHTML = `<span>Volgende <b>${esc(S[trip.stops[next]].n)}</b> · <b>${toNext.toFixed(1)}</b> km</span><span>Aankomst <b>${fmtTime(new Date(Date.now()+Math.max(0,minsLeft)*60000+Math.max(0,-pos)/SPEED*60000))}</b></span>`;
+  deck.innerHTML=currentCards.map((c,i)=>cardHTML(c,["top","back1","back2"][i])).reverse().join("");
+  bindDrag(deck.querySelector(".card.top"));
+  setControls(top);
+}
+function setControls(c){
+  $("btnNo").disabled=$("btnYes").disabled=!c;
+  if(!c) return;
+  const tf=c.type==="tf";
+  $("lblNo").textContent=tf?"Klopt niet":"Volgende";
+  $("lblYes").textContent=tf?"Klopt":"Bewaren";
+  $("yesIcon").innerHTML=tf?'<path d="M5 12.5l4.5 4.5L19 7.5"/>':'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>';
+}
 
-  // route
+// ---------- swipen ----------
+function bindDrag(el){
+  let x0=0,y0=0,dx=0,dy=0,t0=0,id=null;
+  const yes=el.querySelector(".stamp.yes"), no=el.querySelector(".stamp.no");
+  el.addEventListener("pointerdown",e=>{
+    if(busy||e.button>0) return;
+    id=e.pointerId; x0=e.clientX; y0=e.clientY; dx=dy=0; t0=Date.now(); dragging=true;
+    el.setPointerCapture(id); el.classList.add("dragging"); el.style.transition="none";
+  });
+  el.addEventListener("pointermove",e=>{
+    if(e.pointerId!==id) return;
+    dx=e.clientX-x0; dy=e.clientY-y0;
+    el.style.transform=`translate(${dx}px,${dy*.25}px) rotate(${dx/18}deg)`;
+    yes.style.opacity=Math.max(0,Math.min(1,dx/90)); no.style.opacity=Math.max(0,Math.min(1,-dx/90));
+  });
+  const end=e=>{
+    if(e.pointerId!==id) return;
+    id=null; dragging=false; el.classList.remove("dragging");
+    const v=Math.abs(dx)/Math.max(1,Date.now()-t0);
+    if(Math.abs(dx)>100||(Math.abs(dx)>40&&v>.6)) decide(dx>0?1:-1,el);
+    else { el.style.transition="transform .25s"; el.style.transform=""; yes.style.opacity=no.style.opacity=0; }
+  };
+  el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
+}
+async function decide(dir,el){
+  if(busy) return;
+  const c=currentCards[0]; if(!c) return;
+  el=el||$("deck").querySelector(".card.top");
+  busy=true;
+  // kaart wegvliegen
+  el.style.transition="transform .28s ease-in";
+  el.querySelector(dir>0?".stamp.yes":".stamp.no").style.opacity=1;
+  el.style.transform=`translate(${dir*window.innerWidth}px,-20px) rotate(${dir*28}deg)`;
+  await sleep(reduced?0:240);
+  // resultaat vastleggen
+  seen.add(c.id); store.set("sq2-seen",[...seen]);
+  if(c.type==="fact"){
+    if(dir>0 && !liked.some(x=>x.id===c.id)){ liked.unshift({id:c.id,st:S[c.k].n,t:c.text}); store.set("sq2-liked",liked); }
+    $("led").innerHTML = dir>0 ? `<b>Bewaard.</b> Terug te lezen onder "Bewaarde feiten".` : `Volgende halte: <b>${esc(nextName())}</b>`;
+  } else {
+    const ok=(dir>0)===c.correct; results[c.id]=ok; store.set("sq2-res",results);
+    $("led").innerHTML = `<span class="${ok?"ok":"bad"}"><b>${ok?"Goed!":"Helaas."}</b></span> ${esc(c.q)} <b>${esc(c.right)}</b>. ${esc(c.e)}`;
+  }
+  updateScore(); renderSaved();
+  // deuren dicht en weer open
+  if(!reduced){
+    $("stage").classList.add("closed"); chime();
+    await sleep(560);
+    renderDeck(true);
+    await sleep(220);
+    $("stage").classList.remove("closed");
+    await sleep(380);
+  } else renderDeck(true);
+  busy=false;
+}
+$("btnNo").onclick=()=>decide(-1);
+$("btnYes").onclick=()=>decide(1);
+document.addEventListener("keydown",e=>{
+  if(e.target.closest("input,select,textarea")) return;
+  if(e.key==="ArrowLeft") decide(-1);
+  if(e.key==="ArrowRight") decide(1);
+});
+
+// ---------- gong ----------
+let actx=null;
+function chime(){
+  if(!soundOn) return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    [[659,0],[523,.32]].forEach(([f,t])=>{
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type="sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(0,actx.currentTime+t); g.gain.linearRampToValueAtTime(.18,actx.currentTime+t+.02); g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.6);
+      o.connect(g).connect(actx.destination); o.start(actx.currentTime+t); o.stop(actx.currentTime+t+.65);
+    });
+  }catch{}
+}
+function setSound(v){soundOn=v;store.set("sq2-sound",v);$("sound").setAttribute("aria-pressed",v);$("sound").textContent=v?"Gong aan":"Gong uit"}
+$("sound").onclick=()=>{setSound(!soundOn); if(soundOn) chime();};
+
+// ---------- score & bewaard ----------
+function updateScore(){
+  const ids=Object.keys(results), good=ids.filter(i=>results[i]).length;
+  $("score").textContent=`${good}/${ids.length} goed · ${liked.length} bewaard`;
+}
+function renderSaved(){
+  $("savedSum").textContent=liked.length;
+  $("saved").innerHTML=liked.length?liked.map(x=>`<li><small>${esc(x.st)}</small>${esc(x.t)}</li>`).join(""):`<li>Nog niets bewaard. Swipe een funfact naar rechts om hem hier te zetten.</li>`;
+}
+function resetSeen(){ seen.clear(); store.set("sq2-seen",[]); renderDeck(true); $("led").textContent="Alle kaarten staan weer klaar."; }
+$("reset").onclick=resetSeen;
+
+// ---------- stationsbord & route ----------
+function nextName(){ const c=Math.max(0,Math.min(trip.cum.at(-1),pos)); let n=trip.cum.findIndex(x=>x>c+.3); if(n<0)n=trip.stops.length-1; return S[trip.stops[n]].n; }
+function render(){
+  const P=computePos(), total=trip.cum.at(-1); pos=P.km;
+  const c=Math.max(0,Math.min(total,pos)), n=trip.stops.length;
+  let next=trip.cum.findIndex(x=>x>c+.3); if(next<0) next=n-1;
+  const prevNear=nearI; nearI=nearestIdx(c);
+  const at=Math.abs(trip.cum[nearI]-c)<1.5;
+  $("mode").classList.toggle("warn",P.src!=="gps");
+  $("modeTxt").textContent=P.src==="gps"?"GPS live":"Tijd-schatting";
+  let eb,title;
+  if(pos<0){eb="Nog niet vertrokken";title=`Vertrek uit ${S[trip.stops[0]].n} over ${Math.ceil(-pos/SPEED)} min`}
+  else if(c>=total-.3){eb="Aangekomen";title=S[trip.stops[n-1]].n}
+  else if(at){eb=nearI===0?"Vertrek":"Nu bij";title=S[trip.stops[nearI]].n}
+  else {eb="Volgende halte";title=S[trip.stops[next]].n}
+  $("nowEyebrow").textContent=eb+(demo?" · voorbeeldrit":"");
+  $("nowTitle").textContent=title;
+  const pct=(c/total*100).toFixed(1)+"%";
+  $("trackFill").style.width=pct; $("trackTrain").style.left=pct;
+  const mins=(total-c)/SPEED+Math.max(0,-pos)/SPEED;
+  $("stats").innerHTML=`<span>${esc(S[trip.stops[0]].n)} → ${esc(S[trip.stops[n-1]].n)}</span><span>Aankomst ${fmtTime(new Date(Date.now()+mins*60000))}</span>`;
   const ol=$("route"); ol.innerHTML="";
-  const focusIdx = viewKey ? trip.stops.indexOf(viewKey) : near;
   trip.stops.forEach((k,i)=>{
     const li=document.createElement("li");
-    if(trip.cum[i]<clamped-0.3) li.className="passed";
-    if(i===near && pos>=0) li.classList.add("here");
-    if(i===focusIdx) li.classList.add("viewing");
-    if(i<n-1 && trip.cum[i]<=clamped && trip.cum[i+1]>clamped){
-      li.classList.add("half");
-      const frac=(clamped-trip.cum[i])/(trip.cum[i+1]-trip.cum[i]);
-      li.style.setProperty("--h",(50+frac*50).toFixed(0)+"%");
-    }
-    const hasContent=(S[k].f||S[k].q)?"":" · nog geen feiten";
-    li.innerHTML=`<span class="stop"></span><button type="button"><span class="name">${esc(S[k].n)}</span><span class="km">${trip.cum[i].toFixed(0)} km${hasContent}</span></button>`;
-    li.querySelector("button").onclick=()=>{viewKey=k;render()};
+    if(trip.cum[i]<c-.3) li.className="passed";
+    if(i===nearI&&pos>=0) li.classList.add("here");
+    if(i<n-1&&trip.cum[i]<=c&&trip.cum[i+1]>c){li.classList.add("half");li.style.setProperty("--h",(50+(c-trip.cum[i])/(trip.cum[i+1]-trip.cum[i])*50).toFixed(0)+"%")}
+    li.innerHTML=`<span class="stop"></span><button type="button"><span class="name">${esc(S[k].n)}</span><span class="km">${trip.cum[i].toFixed(0)} km</span></button>`;
+    li.querySelector("button").onclick=()=>{
+      if(P.src==="gps"){$("routeSum").textContent="GPS volgt je al live";return}
+      trip.t0=Date.now()-trip.cum[i]/SPEED*60000; demo=false; saveTrip();
+      $("led").innerHTML=`Positie bijgesteld: je bent bij <b>${esc(S[k].n)}</b>.`; render(); renderDeck(true);
+    };
     ol.appendChild(li);
   });
-
-  renderContent(trip.stops[focusIdx]);
-  $("follow").hidden=!viewKey;
-  $("imHere").hidden=!viewKey || P.src==="gps";
+  $("aiBtn").textContent=`Meer kaarten van Claude over ${S[trip.stops[nearI]].n}`;
+  if(!busy&&!dragging){ if(prevNear!==nearI) renderDeck(true); else renderDeck(false); }
 }
 
-function renderContent(k){
-  const st=S[k], A=ai[k]||{facts:[],quiz:[]};
-  $("stName").textContent=st.n;
-  const box=$("content");
-  if(tab==="facts"){
-    const items=[...(st.f||[]).map(t=>({t,ai:false})),...A.facts.map(t=>({t,ai:true}))];
-    box.innerHTML = items.length
-      ? `<ul class="facts">${items.map(x=>`<li><span class="tag ${x.ai?"ai":""}">${x.ai?"Van Claude":"Funfact"}</span><br>${esc(x.t)}</li>`).join("")}</ul>`
-      : `<p class="empty">Voor ${esc(st.n)} staan nog geen vaste feiten klaar.${sample?" Vraag Claude om iets te vertellen.":""}</p>`;
-  } else {
-    const qs=[...(st.q||[]).map((x,i)=>({...x,id:k+"-v"+i,ai:false})),...A.quiz.map((x,i)=>({...x,id:k+"-ai"+i+"-"+x.q.slice(0,20),ai:true}))];
-    if(!qs.length){ box.innerHTML=`<p class="empty">Nog geen quizvraag voor ${esc(st.n)}.${sample?" Laat Claude er een maken.":""}</p>`; return; }
-    box.innerHTML="";
-    qs.forEach(x=>box.appendChild(quizEl(x)));
-  }
-}
-
-function quizEl(x){
-  const d=document.createElement("div"); d.className="quizitem";
-  d.innerHTML=`<span class="tag ${x.ai?"ai":""}">${x.ai?"Vraag van Claude":"Quizvraag"}</span><p class="q">${esc(x.q)}</p><div class="opts"></div><p class="explain" hidden></p>`;
-  // opties husselen, maar vast per vraag
-  const order=x.o.map((_,i)=>i).sort((a,b)=>((x.q.length*7+a*13)%5)-((x.q.length*7+b*13)%5));
-  const wrap=d.querySelector(".opts"), ex=d.querySelector(".explain");
-  const btns=order.map(i=>{const b=document.createElement("button");b.type="button";b.className="opt";b.textContent=x.o[i];b.dataset.i=i;wrap.appendChild(b);return b});
-  function show(chosen){
-    btns.forEach(b=>{b.disabled=true;const i=+b.dataset.i;if(i===x.a)b.classList.add("right");else if(i===chosen)b.classList.add("wrong")});
-    ex.hidden=false; ex.textContent=(chosen===x.a?"Goed! ":"Helaas. ")+(x.e||"");
-  }
-  if(x.id in answered) show(answered[x.id]);
-  btns.forEach(b=>b.onclick=()=>{const c=+b.dataset.i;answered[x.id]=c;store.set("sq-answered",answered);show(c);updateScore()});
-  // bewaar het juiste antwoord bij de id voor de score
-  quizKeys[x.id]=x.a;
-  return d;
-}
-const quizKeys={};
-function updateScore(){
-  const ids=Object.keys(answered).filter(id=>id in quizKeys);
-  const good=ids.filter(id=>answered[id]===quizKeys[id]).length;
-  $("score").textContent=`${good}/${ids.length} goed`;
-}
-// alle vaste vragen registreren voor de score
-Object.entries(S).forEach(([k,st])=>(st.q||[]).forEach((x,i)=>quizKeys[k+"-v"+i]=x.a));
-
-// ---------- instellingen ----------
-function fillSelects(lineId, fromKey, toKey){
+// ---------- rit instellen ----------
+function fillSelects(lineId,f,t){
   const L=LINES.find(l=>l.id===lineId);
   $("line").innerHTML=LINES.map(l=>`<option value="${l.id}"${l.id===lineId?" selected":""}>${esc(l.n)}</option>`).join("");
-  const opts=k=>L.s.map(s=>`<option value="${s}"${s===k?" selected":""}>${esc(S[s].n)}</option>`).join("");
-  $("from").innerHTML=opts(fromKey); $("to").innerHTML=opts(toKey);
+  const o=k=>L.s.map(s=>`<option value="${s}"${s===k?" selected":""}>${esc(S[s].n)}</option>`).join("");
+  $("from").innerHTML=o(f); $("to").innerHTML=o(t);
 }
 $("line").onchange=()=>{const L=LINES.find(l=>l.id===$("line").value);fillSelects(L.id,L.s[0],L.s.at(-1))};
+function saveTrip(){store.set("sq-trip",{l:trip.line.id,f:trip.stops[0],t:trip.stops.at(-1),t0:trip.t0})}
+function setupSum(){$("setupSum").textContent=`${S[trip.stops[0]].n} → ${S[trip.stops.at(-1)].n}`}
 $("start").onclick=()=>{
   const f=$("from").value,t=$("to").value;
   if(f===t){$("gpsHint").textContent="Kies een ander eindstation dan je vertrekstation.";return}
   const [h,m]=($("dep").value||fmtTime(new Date())).split(":").map(Number);
-  const d=new Date(); d.setHours(h,m,0,0);
-  if(d-Date.now()>12*3600e3) d.setDate(d.getDate()-1);
-  trip=buildTrip($("line").value,f,t,d.getTime()); viewKey=null; demo=false;
-  store.set("sq-trip",{l:$("line").value,f,t,t0:trip.t0});
-  $("setup").open=false; setupSum(); render();
+  const d=new Date(); d.setHours(h,m,0,0); if(d-Date.now()>12*3600e3) d.setDate(d.getDate()-1);
+  trip=buildTrip($("line").value,f,t,d.getTime()); demo=false; saveTrip();
+  $("setup").open=false; setupSum(); nearI=-1; render();
+  $("led").innerHTML=`Goede reis naar <b>${esc(S[t].n)}</b>. Swipe maar!`;
 };
-function setupSum(){$("setupSum").textContent=`${S[trip.stops[0]].n} → ${S[trip.stops.at(-1)].n}`}
-$("follow").onclick=()=>{viewKey=null;render()};
-$("imHere").onclick=()=>{const i=trip.stops.indexOf(viewKey);trip.t0=Date.now()-trip.cum[i]/SPEED*60000;store.set("sq-trip",{l:trip.line.id,f:trip.stops[0],t:trip.stops.at(-1),t0:trip.t0});viewKey=null;render()};
-function setTab(t){tab=t;$("tabFacts").setAttribute("aria-selected",t==="facts");$("tabQuiz").setAttribute("aria-selected",t==="quiz");render()}
-$("tabFacts").onclick=()=>setTab("facts"); $("tabQuiz").onclick=()=>setTab("quiz");
 
 // ---------- GPS ----------
 function startGps(){
-  if(!("geolocation" in navigator)){ $("gpsHint").textContent="Dit apparaat heeft geen GPS-toegang. De positie wordt geschat op je vertrektijd."; return; }
-  try{
-    navigator.geolocation.watchPosition(
-      p=>{gps={lat:p.coords.latitude,lon:p.coords.longitude};$("gpsHint").textContent="GPS actief: je positie wordt live gevolgd.";render()},
-      ()=>{gps=null;$("gpsHint").textContent="GPS is hier niet beschikbaar. De positie wordt geschat op je vertrektijd; stel bij met 'Ik ben nu hier'.";render()},
-      {enableHighAccuracy:true,maximumAge:15000,timeout:20000});
-  }catch{ $("gpsHint").textContent="GPS is hier niet beschikbaar. De positie wordt geschat op je vertrektijd."; }
+  if(!("geolocation" in navigator)){$("gpsHint").textContent="Dit apparaat geeft geen locatie door. De positie wordt geschat op je vertrektijd.";return}
+  try{navigator.geolocation.watchPosition(
+    p=>{gps={lat:p.coords.latitude,lon:p.coords.longitude};$("gpsHint").textContent="GPS actief. Ben je ver van de route, dan valt de app terug op de tijd-schatting.";render()},
+    ()=>{gps=null;$("gpsHint").textContent="GPS is hier niet beschikbaar. De positie wordt geschat op je vertrektijd.";render()},
+    {enableHighAccuracy:true,maximumAge:15000,timeout:20000});
+  }catch{$("gpsHint").textContent="GPS is hier niet beschikbaar."}
 }
 
-// ---------- Claude-extra's ----------
-let sample=null, busy=false;
+// ---------- Claude ----------
+let sample=null, asking=false;
 async function askClaude(){
-  const k=viewKey||trip.stops[nearestIdx(Math.max(0,Math.min(trip.cum.at(-1),pos)))];
-  const i=trip.stops.indexOf(k), prev=S[trip.stops[i-1]]?.n, next=S[trip.stops[i+1]]?.n;
+  if(!sample||asking) return;
+  const k=trip.stops[nearI], i=nearI, prev=S[trip.stops[i-1]]?.n, next=S[trip.stops[i+1]]?.n;
   const known=[...(S[k].f||[]),...(ai[k]?.facts||[])];
   const prompt=`Je bent een vrolijke maar nauwkeurige reisgids voor treinreizigers in Nederland.
 De reiziger zit in de trein op de lijn "${trip.line.n}" en is nu bij of vlakbij station ${S[k].n}${prev?`, tussen ${prev}`:""}${next?` en ${next}`:""}.
 Geef in het Nederlands:
 - 2 korte funfacts (max 2 zinnen elk) over ${S[k].n} of het landschap langs het spoor hier. Alleen feiten waar je zeker van bent.
-- 1 meerkeuze quizvraag met 4 antwoordopties waarvan er precies 1 klopt, plus een korte uitleg.
+- 2 meerkeuze quizvragen met elk 4 korte antwoordopties (max 6 woorden) waarvan er precies 1 klopt, plus een korte uitleg.
 Herhaal deze bekende feiten niet: ${known.length?known.join(" | "):"(geen)"}
 Antwoord met alleen JSON in deze vorm:
-{"facts":["...","..."],"quiz":{"q":"...","o":["...","...","...","..."],"a":0,"e":"..."}}`;
-  busy=true; $("aiBtn").disabled=true; $("aiNote").textContent="Claude denkt na…";
+{"facts":["...","..."],"quiz":[{"q":"...","o":["...","...","...","..."],"a":0,"e":"..."}]}`;
+  asking=true; $("aiBtn").disabled=true; $("led").textContent="Claude zoekt nieuwe kaarten…";
   try{
     const r=await sample.json(prompt,{cache:false});
     const A=ai[k]||(ai[k]={facts:[],quiz:[]});
     if(Array.isArray(r?.facts)) A.facts.push(...r.facts.filter(t=>typeof t==="string").slice(0,3));
-    const q=r?.quiz;
-    if(q&&typeof q.q==="string"&&Array.isArray(q.o)&&q.o.length>=2&&Number.isInteger(q.a)&&q.a>=0&&q.a<q.o.length) A.quiz.push({q:q.q,o:q.o.map(String),a:q.a,e:String(q.e||"")});
-    $("aiNote").textContent="Toegevoegd. AI kan fouten maken.";
-    render();
+    for(const q of (Array.isArray(r?.quiz)?r.quiz:[r?.quiz]).slice(0,3))
+      if(q&&typeof q.q==="string"&&Array.isArray(q.o)&&q.o.length>=2&&Number.isInteger(q.a)&&q.a>=0&&q.a<q.o.length) A.quiz.push({q:q.q,o:q.o.map(String),a:q.a,e:String(q.e||"")});
+    $("led").innerHTML=`Nieuwe kaarten over <b>${esc(S[k].n)}</b> staan klaar. AI kan fouten maken.`;
+    renderDeck(true);
   }catch(e){
-    if(e?.code==="not_granted"||e?.code==="sampling_disabled"||e?.code==="not_declared"){ $("aiRow").hidden=true; }
-    else if(e?.code==="rate_limited"){ $("aiNote").textContent="Even te veel vragen. Probeer het over een minuutje nog eens."; }
-    else if(e?.code!=="cancelled"){ $("aiNote").textContent="Dat lukte niet. Probeer het opnieuw."; }
-  }finally{ busy=false; $("aiBtn").disabled=false; }
+    if(["not_granted","sampling_disabled","not_declared"].includes(e?.code)){sample=null;$("aiBtn").hidden=true;$("led").textContent="Claude mag hier geen kaarten maken.";renderDeck(true)}
+    else if(e?.code==="rate_limited") $("led").textContent="Even te veel vragen aan Claude. Probeer het zo nog eens.";
+    else if(e?.code!=="cancelled") $("led").textContent="Claude kon geen kaarten maken. Probeer het opnieuw.";
+  }finally{asking=false;$("aiBtn").disabled=false}
 }
-$("aiBtn").onclick=()=>{ if(!busy&&sample) askClaude(); };
-(async()=>{ try{ sample = window.claude ? await window.claude.use("sample") : null; }catch{ sample=null; }
-  $("aiRow").hidden=!sample; if(trip) render(); })();
+$("aiBtn").onclick=askClaude;
+(async()=>{try{sample=window.claude?.use?await window.claude.use("sample"):null}catch{sample=null}
+  $("aiBtn").hidden=!sample; if(trip) renderDeck(true)})();
 
 // ---------- start ----------
 (function init(){
   const saved=store.get("sq-trip",null);
-  if(saved && LINES.some(l=>l.id===saved.l) && Date.now()-saved.t0<6*3600e3){
+  if(saved&&LINES.some(l=>l.id===saved.l)&&Date.now()-saved.t0<6*3600e3){
     trip=buildTrip(saved.l,saved.f,saved.t,saved.t0); fillSelects(saved.l,saved.f,saved.t);
-    $("dep").value=fmtTime(new Date(saved.t0));
   } else {
-    // voorbeeldrit: Amsterdam → Eindhoven, 14 minuten geleden vertrokken
-    trip=buildTrip("A","asd","ehv",Date.now()-14*60000); fillSelects("A","asd","ehv"); demo=true;
-    $("dep").value=fmtTime(new Date(trip.t0)); $("setup").open=true;
+    trip=buildTrip("A","asd","ehv",Date.now()-14*60000); fillSelects("A","asd","ehv"); demo=true; $("setup").open=true;
   }
-  setupSum(); render(); updateScore(); startGps();
+  $("dep").value=fmtTime(new Date(trip.t0));
+  setSound(soundOn); setupSum(); updateScore(); renderSaved(); render(); renderDeck(true); startGps();
   setInterval(render,15000);
 })();
 </script>
