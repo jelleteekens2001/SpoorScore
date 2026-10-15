@@ -42,20 +42,21 @@
   --door:#f2bd10; --door-2:#d6a400; --glass:#2c4570;
   --ok:#3ccb7f; --ok-soft:#123323; --bad:#ff5c72; --bad-soft:#3a1420; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
-.scene{max-width:560px;margin:0 auto;padding-block:30px 32px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
+.scene{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-block:24px 6px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 
 /* ---- treinstel ---- */
-.train{position:relative}
-.roof{position:relative;height:16px;margin:0 10px;background:linear-gradient(var(--roof),var(--roof-2));border-radius:16px 16px 0 0}
-.panto{position:absolute;bottom:100%;left:22%;width:84px;height:26px;color:var(--roof-2)}
+.train{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.roof{position:relative;flex:none;height:12px;margin:0 10px;background:linear-gradient(var(--roof),var(--roof-2));border-radius:16px 16px 0 0}
+.panto{position:absolute;bottom:100%;left:22%;width:76px;height:22px;color:var(--roof-2)}
 .panto svg{width:100%;height:100%;display:block}
-.carbody{background:linear-gradient(180deg,var(--yellow) 0,var(--yellow) 96%,var(--yellow-dark) 100%);border-radius:14px 14px 0 0;padding:12px 12px 14px;display:flex;flex-direction:column;gap:12px;box-shadow:inset 0 2px 0 rgba(255,255,255,.35)}
+.carbody{background:linear-gradient(180deg,var(--yellow) 0,var(--yellow) 96%,var(--yellow-dark) 100%);border-radius:14px 14px 0 0;padding:10px 10px 12px;display:flex;flex-direction:column;gap:9px;flex:1;min-height:0;box-shadow:inset 0 2px 0 rgba(255,255,255,.35)}
 .carhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#003082}
-h1{font-family:var(--f-display);font-weight:800;font-size:1.45rem;letter-spacing:-.01em;margin:0;line-height:1;color:#003082}
+h1{font-family:var(--f-display);font-weight:800;font-size:1.3rem;letter-spacing:-.01em;margin:0;line-height:1;color:#003082}
 h1 span{font-weight:400}
 .hright{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .score{font-family:var(--f-mono);font-size:.78rem;color:#003082;font-weight:700;font-variant-numeric:tabular-nums}
@@ -66,7 +67,7 @@ h1 span{font-weight:400}
 .iconbtn[aria-pressed="true"]{background:#003082;color:#ffffff}
 
 /* ramen met landschap */
-.windows{display:grid;grid-template-columns:1fr 1fr;gap:14px;height:66px}
+.windows{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:12px;height:44px}
 .win{position:relative;border-radius:12px;background:var(--frame);padding:4px}
 .view{position:relative;height:100%;border-radius:8px;overflow:hidden;background:linear-gradient(var(--sky1),var(--sky2))}
 .view .l{position:absolute;left:0;right:0;bottom:0;animation:slide linear infinite;animation-play-state:paused}
@@ -81,17 +82,17 @@ body.moving .view .l{animation-play-state:running}
 @keyframes slide{from{background-position-x:0}to{background-position-x:calc(-1 * var(--w))}}
 
 /* richtingfilmbord */
-.dest{background:var(--display);color:var(--disp-ink);border-radius:8px;padding:10px 14px 12px;display:flex;flex-direction:column;gap:6px;box-shadow:inset 0 0 0 3px var(--frame)}
+.dest{flex:none;background:var(--display);color:var(--disp-ink);border-radius:8px;padding:8px 12px 9px;display:flex;flex-direction:column;gap:4px;box-shadow:inset 0 0 0 3px var(--frame)}
 .dest .eyebrow{font-size:.78rem;font-weight:700;color:var(--disp-hi)}
-.dest h2{font-family:var(--f-display);font-weight:700;font-size:1.55rem;margin:0;line-height:1.05;text-wrap:balance}
-.track{position:relative;height:4px;background:rgba(255,255,255,.25);border-radius:2px;margin-top:6px}
+.dest h2{font-family:var(--f-display);font-weight:700;font-size:1.35rem;margin:0;line-height:1.05;text-wrap:balance}
+.track{position:relative;height:4px;background:rgba(255,255,255,.25);border-radius:2px;margin:6px 0 4px}
 .track i{position:absolute;left:0;top:0;bottom:0;background:#ffffff;border-radius:2px;transition:width .6s}
 .track b{position:absolute;top:50%;width:22px;height:12px;margin:-6px 0 0 -11px;background:var(--yellow);border:2px solid #ffffff;border-radius:4px 7px 7px 4px;transition:left .6s}
-.signstats{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.76rem;font-variant-numeric:tabular-nums;opacity:.92}
+.signstats{display:flex;gap:14px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-family:var(--f-mono);font-size:.76rem;font-variant-numeric:tabular-nums;opacity:.92}
 .signstats .late{color:#ff8a9a;font-weight:700}
 
 /* deur met kaarten */
-.stage{position:relative;height:clamp(330px,47vh,450px);background:var(--frame);border-radius:12px 12px 4px 4px;padding:8px;box-shadow:inset 0 0 0 3px var(--seal),0 0 0 3px var(--yellow-dark)}
+.stage{position:relative;flex:1;min-height:210px;background:var(--frame);border-radius:12px 12px 4px 4px;padding:8px;box-shadow:inset 0 0 0 3px var(--seal),0 0 0 3px var(--yellow-dark)}
 .deck{position:absolute;inset:8px;border-radius:8px;overflow:hidden;touch-action:none;background:var(--seal)}
 .card{position:absolute;inset:0;background:var(--surface);border-radius:8px;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;will-change:transform;touch-action:none}
 .card.back1{transform:translateY(8px) scale(.97);filter:brightness(.93)}
@@ -144,36 +145,66 @@ body.moving .view .l{animation-play-state:running}
 .sigtext{position:absolute;left:50%;top:71%;transform:translateX(-50%);white-space:nowrap;z-index:2;font-family:var(--f-mono);font-weight:700;font-size:.74rem;letter-spacing:.1em;color:var(--disp-hi);background:var(--display);padding:4px 10px;border-radius:4px;opacity:0;transition:opacity .25s .35s}
 .stage.closed .sigtext{opacity:1}
 
-.controls{display:flex;justify-content:center;align-items:center;gap:36px}
-.round{width:64px;height:64px;border-radius:50%;border:0;display:grid;place-items:center;transition:transform .12s}
+.controls{flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 4px}
+.round{width:54px;height:54px;border-radius:50%;border:0;display:grid;place-items:center;transition:transform .12s}
 .round:active{transform:scale(.92)}
-.round svg{width:28px;height:28px}
+.round svg{width:26px;height:26px}
 .round.no{color:#003082;background:#ffffff;box-shadow:0 0 0 3px #003082}
 .round.yes{color:#ffffff;background:#003082;box-shadow:0 0 0 3px #003082}
 .round:disabled{opacity:.45;cursor:default}
-.ctl{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:.85rem;font-weight:700;color:#003082}
+.ctl{display:flex;align-items:center;gap:10px;font-size:.95rem;font-weight:700;color:#003082}
+.ctl.r{flex-direction:row-reverse}
+.ctr{font-size:.78rem;font-weight:700;color:#003082;text-align:center;opacity:.8}
 
-.led{background:var(--display);color:var(--disp-ink);font-size:.95rem;line-height:1.45;border-radius:8px;padding:10px 14px;min-height:3.2em;box-shadow:inset 0 0 0 3px var(--frame)}
+.led{color:var(--disp-ink);font-size:.86rem;line-height:1.4;border-top:1px dashed rgba(255,255,255,.28);padding-top:6px;margin-top:2px;max-height:4.4em;overflow:hidden}
 .led b{color:var(--disp-hi)}
 .led .ok b{color:#5fe39a}.led .bad b{color:#ff8a9a}
 .led button{background:var(--yellow);color:#003082;border:0;border-radius:4px;padding:4px 10px;font-weight:700;margin:6px 6px 0 0;font-size:.85rem}
 .aiLink{border:0;background:none;color:#003082;text-decoration:underline;text-underline-offset:3px;font-weight:700;font-size:.9rem;align-self:center;padding:2px}
 .aiLink:disabled{opacity:.6}
 
-.stripe{height:16px;background:#003082;box-shadow:inset 0 -5px 0 #0063d3;margin:0}
-.under{position:relative;height:46px;margin:0 6px}
+.stripe{flex:none;height:12px;background:#003082;box-shadow:inset 0 -5px 0 #0063d3;margin:0}
+.under{flex:none;position:relative;height:34px;margin:0 6px}
 .skirt{position:absolute;left:0;right:0;top:0;height:12px;background:var(--frame);border-radius:0 0 6px 6px}
-.bogie{position:absolute;top:6px;display:flex;gap:10px;padding:0 6px}
+.bogie{position:absolute;top:5px;display:flex;gap:8px;padding:0 6px}
 .bogie.a{left:12%}.bogie.b{right:12%}
-.bogie::before{content:"";position:absolute;left:0;right:0;top:10px;height:8px;background:var(--frame);border-radius:3px}
-.wheel{position:relative;width:32px;height:32px;border-radius:50%;background:conic-gradient(var(--wheel-hi) 0 10deg,var(--wheel) 10deg 90deg,var(--wheel-hi) 90deg 100deg,var(--wheel) 100deg 180deg,var(--wheel-hi) 180deg 190deg,var(--wheel) 190deg 270deg,var(--wheel-hi) 270deg 280deg,var(--wheel) 280deg);box-shadow:inset 0 0 0 4px var(--wheel),0 0 0 2px var(--seal);animation:spin .6s linear infinite;animation-play-state:paused}
+.bogie::before{content:"";position:absolute;left:0;right:0;top:8px;height:7px;background:var(--frame);border-radius:3px}
+.wheel{position:relative;width:26px;height:26px;border-radius:50%;background:conic-gradient(var(--wheel-hi) 0 10deg,var(--wheel) 10deg 90deg,var(--wheel-hi) 90deg 100deg,var(--wheel) 100deg 180deg,var(--wheel-hi) 180deg 190deg,var(--wheel) 190deg 270deg,var(--wheel-hi) 270deg 280deg,var(--wheel) 280deg);box-shadow:inset 0 0 0 4px var(--wheel),0 0 0 2px var(--seal);animation:spin .6s linear infinite;animation-play-state:paused}
 body.moving .wheel{animation-play-state:running}
 @keyframes spin{to{transform:rotate(360deg)}}
-.rails{height:12px;background:linear-gradient(var(--rail) 0 4px,transparent 4px),repeating-linear-gradient(90deg,var(--sleeper) 0 14px,transparent 14px 34px) 0 4px/100% 8px no-repeat}
+.rails{flex:none;height:12px;background:linear-gradient(var(--rail) 0 4px,transparent 4px),repeating-linear-gradient(90deg,var(--sleeper) 0 14px,transparent 14px 34px) 0 4px/100% 8px no-repeat}
 
-/* ---- perron ---- */
-.platform{margin-top:2px;background:var(--plat);border-radius:0 0 12px 12px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:12px;
-  border-top:6px dotted var(--plat-edge)}
+/* tussenstuk zonder deuren dat voorbij rijdt */
+.stage{overflow:hidden}
+.between{position:absolute;inset:0;z-index:12;transform:translateX(104%);background:linear-gradient(90deg,var(--yellow-dark),var(--yellow) 6%,var(--yellow) 94%,var(--yellow-dark));
+  border-left:4px solid var(--seal);border-right:4px solid var(--seal);display:flex;flex-direction:column;gap:10px;padding:12px 12px 0}
+.stage.pass-in .between{transition:transform .85s cubic-bezier(.55,0,.8,.3);transform:translateX(0)}
+.stage.pass-out .between{transition:transform .85s cubic-bezier(.2,.7,.45,1);transform:translateX(-104%)}
+.bdest{display:flex;align-items:baseline;gap:10px;background:var(--display);color:var(--disp-ink);border-radius:6px;padding:6px 10px;box-shadow:inset 0 0 0 3px var(--frame);font-size:.85rem;white-space:nowrap;overflow:hidden}
+.bdest span{color:var(--disp-hi);font-weight:700}
+.bdest b{font-weight:700;font-size:1rem;overflow:hidden;text-overflow:ellipsis}
+.bwins{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bwin{position:relative;border-radius:10px;background:var(--frame);padding:4px;max-height:220px}
+.bwin i{position:absolute;inset:4px;border-radius:7px;overflow:hidden;background:linear-gradient(180deg,#3b4a66,#1d2638)}
+.bwin i::before{content:"";position:absolute;left:14%;right:14%;bottom:0;height:46%;background:radial-gradient(ellipse at 30% 0,#2a3550 0 30%,transparent 31%),radial-gradient(ellipse at 72% 0,#2a3550 0 26%,transparent 27%);opacity:.85}
+.bwin i::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.22) 0 16%,transparent 16% 30%,rgba(255,255,255,.1) 30% 36%,transparent 36%)}
+.bmarks{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bclass{display:inline-grid;place-items:center;min-width:44px;height:44px;padding:0 8px;border-radius:6px;background:#ffffff;color:#003082;font-family:var(--f-display);font-weight:800;font-size:1.7rem;box-shadow:0 0 0 2px #003082}
+.bclass.first{background:#003082;color:#ffc917;box-shadow:0 0 0 2px #ffc917}
+.blabel{font-weight:700;color:#003082}
+.bpill{display:inline-flex;align-items:center;gap:6px;background:#ffffff;color:#003082;border-radius:99px;padding:4px 10px 4px 6px;font-weight:700;font-size:.85rem;box-shadow:0 0 0 2px #003082}
+.bpill svg{width:20px;height:20px}
+.bstripe{margin:0 -12px;height:12px;background:#003082;box-shadow:inset 0 -4px 0 #0063d3}
+body.moving-force .view .l,body.moving-force .wheel{animation-play-state:running}
+
+/* ---- menu ---- */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(5,8,20,.55)}
+.sheetbox{background:var(--plat);border-top:6px dotted var(--plat-edge);border-radius:14px 14px 0 0;max-height:86%;overflow-y:auto;overscroll-behavior:contain;
+  padding-block:14px calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+.sheethead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheethead h2{margin:0;font-size:1.15rem}
+.trainrow{display:flex;gap:8px;margin-top:10px}
+.trainrow input{flex:1;min-width:0}
 .panel{background:var(--surface);border-radius:8px;padding:14px 16px;box-shadow:0 1px 3px color-mix(in srgb,var(--ink) 14%,transparent)}
 details summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
 details summary::-webkit-details-marker{display:none}
@@ -203,7 +234,8 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
 .saved li{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:.92rem}
 .saved li small{display:block;color:var(--muted);font-size:.74rem;font-weight:700}
 .foot{font-size:.8rem;color:var(--muted);text-align:center;margin:0}
-@media (max-width:420px){.form{grid-template-columns:1fr}.round{width:58px;height:58px}.windows{height:56px}}
+@media (max-height:690px){.windows{display:none}.dest h2{font-size:1.2rem}}
+@media (max-height:600px){.under{display:none}.ctr{display:none}}
 @media (prefers-reduced-motion:reduce){.door,.track i,.track b,.round{transition:none}.view .l,.wheel{animation:none}}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
@@ -218,8 +250,8 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       <h1>Spoor<span>quiz</span></h1>
       <div class="hright">
         <span class="score" id="score">0/0 goed · 0 bewaard</span>
-        <button class="iconbtn" id="sound" type="button" aria-pressed="false">Gong uit</button>
         <span class="chip" id="mode"><span class="dot"></span><span id="modeTxt">Tijd-schatting</span></span>
+        <button class="iconbtn" id="menuBtn" type="button" aria-haspopup="dialog">Menu</button>
       </div>
     </header>
 
@@ -233,6 +265,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       <h2 id="nowTitle">…</h2>
       <div class="track"><i id="trackFill" style="width:0"></i><b id="trackTrain" style="left:0"></b></div>
       <div class="signstats" id="stats"></div>
+      <div class="led" id="led">Swipe een funfact naar rechts om hem te bewaren, of naar links voor de volgende.</div>
     </section>
 
     <section class="stage" id="stage">
@@ -242,15 +275,23 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
         <div class="door r"><span class="knob"></span></div>
         <div class="sigtext">DEUREN SLUITEN</div>
       </div>
+      <div class="between" aria-hidden="true">
+        <div class="bdest"><span id="bTrain">Intercity</span><b id="bDest">Eindhoven Centraal</b></div>
+        <div class="bwins"><div class="bwin"><i></i></div><div class="bwin"><i></i></div></div>
+        <div class="bmarks">
+          <span class="bclass" id="bClass">2</span><span class="blabel" id="bClassLbl">2e klas</span>
+          <span class="bpill" id="bQuiet" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>Stiltecoupé</span>
+          <span class="bpill" id="bBike" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8"/></svg>Fietsen</span>
+        </div>
+        <div class="bstripe"></div>
+      </div>
     </section>
 
     <div class="controls">
       <div class="ctl"><button class="round no" id="btnNo" type="button" aria-label="Naar links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span id="lblNo">Volgende</span></div>
-      <div class="ctl"><button class="round yes" id="btnYes" type="button" aria-label="Naar rechts"><svg id="yesIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><span id="lblYes">Bewaren</span></div>
+      <span class="ctr">of swipe</span>
+      <div class="ctl r"><button class="round yes" id="btnYes" type="button" aria-label="Naar rechts"><svg id="yesIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><span id="lblYes">Bewaren</span></div>
     </div>
-
-    <div class="led" id="led" aria-live="polite">Swipe een funfact naar rechts om hem te bewaren, of naar links voor de volgende.</div>
-    <button class="aiLink" id="aiBtn" type="button" hidden>Meer kaarten van Claude over deze plek</button>
   </div>
   <div class="stripe"></div>
   <div class="under" aria-hidden="true">
@@ -260,22 +301,26 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
   </div>
   <div class="rails" aria-hidden="true"></div>
  </div>
+</div>
 
- <div class="platform">
-  <details class="panel" id="setup">
-    <summary><span>Jouw rit</span><span class="sum" id="setupSum"></span></summary>
-    <div class="form">
-      <label class="full">Lijn<select id="line"></select></label>
-      <label>Van<select id="from"></select></label>
-      <label>Naar<select id="to"></select></label>
-      <label>Vertrektijd<input type="time" id="dep"></label>
-      <label>Treinnummer <span style="font-weight:400;color:var(--muted)">(optioneel)</span><input type="text" id="trainNr" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="bijv. 3541"></label>
-      <label class="full"><button class="btn" id="start" type="button">Start rit</button></label>
-    </div>
-    <p class="hint" id="gpsHint"></p>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+ <div class="sheetbox">
+  <div class="sheethead"><h2>Menu</h2><button class="btn ghost" id="sheetClose" type="button">Sluiten</button></div>
+
+  <section class="panel">
+    <strong>Jouw trein</strong>
+    <p class="hint" style="margin-top:4px">De app zoekt je trein automatisch via je locatie. Lukt dat niet, vul dan het treinnummer in uit de NS-app.</p>
+    <div class="trainrow"><input type="text" id="trainNr" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Treinnummer, bijv. 3541" aria-label="Treinnummer"><button class="btn" id="start" type="button">Gebruik</button></div>
     <p class="hint"><button class="btn ghost" id="findTrain" type="button">Zoek mijn trein via locatie</button></p>
     <p class="hint" id="liveHint"></p>
-  </details>
+    <p class="hint" id="gpsHint"></p>
+  </section>
+
+  <section class="panel">
+    <div class="row" style="justify-content:space-between;align-items:center"><strong>Extra</strong>
+      <button class="iconbtn" id="sound" type="button" aria-pressed="false" style="border-color:var(--blue);color:var(--blue)">Gong uit</button></div>
+    <p class="hint"><button class="btn ghost" id="aiBtn" type="button" hidden>Meer kaarten van Claude over deze plek</button></p>
+  </section>
 
   <details class="panel">
     <summary><span>Route</span><span class="sum" id="routeSum">Tik op een station als je daar nu bent</span></summary>
@@ -288,7 +333,9 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
     <p class="hint"><button class="btn ghost" id="reset" type="button">Alle kaarten opnieuw tonen</button></p>
   </details>
 
-  <p class="foot">Zonder GPS of treinnummer schat de app je positie op basis van de vertrektijd. Klopt het niet? Open de route en tik op het station waar je nu bent.</p>
+  <details id="setup" hidden><summary><span id="setupSum"></span></summary>
+    <select id="line"></select><select id="from"></select><select id="to"></select><input type="time" id="dep">
+  </details>
  </div>
 </div>
 
@@ -689,7 +736,7 @@ async function fling(el,dir){
 async function decide(dir){
   if(busy) return;
   const el=$("deck").querySelector(".card.top");
-  if(pending){ busy=true; await fling(el,dir); busy=false; return proceed(); }
+  if(pending){ const wasQuiz=!pending.saved; busy=true; await fling(el,dir); busy=false; return proceed(wasQuiz?"pass":"doors"); }
   const c=currentCards[0]; if(!c||!el) return;
   busy=true;
   await fling(el,dir);
@@ -708,23 +755,43 @@ async function decide(dir){
   if(dir>0){ pending={c,saved:true}; renderDeck(true); await sleep(reduced?300:1100); if(pending&&pending.c===c) proceed(); return; }
   proceed();
 }
-async function proceed(){
+let passCount=0;
+function dressBetween(){
+  passCount++;
+  const h=hash(String(passCount)+trip.stops.join());
+  const first=h%10<3;
+  $("bClass").textContent=first?"1":"2"; $("bClass").classList.toggle("first",first);
+  $("bClassLbl").textContent=first?"1e klas":"2e klas";
+  $("bQuiet").hidden=!(h%10>=6);
+  $("bBike").hidden=!(!first && h%7===0);
+  $("bTrain").textContent=trip.line.id==="live"?trip.line.n:"Intercity";
+  $("bDest").textContent=S[trip.stops.at(-1)].n;
+}
+async function proceed(kind){
   if(busy) return;
   busy=true; pending=null;
-  if(!reduced){
-    $("stage").classList.add("closed"); chime();
-    await sleep(850);
-    renderDeck(true);
-    await sleep(500);
-    $("stage").classList.remove("closed");
-    await sleep(780);
-  } else renderDeck(true);
+  const st=$("stage");
+  if(reduced){ renderDeck(true); busy=false; return; }
+  st.classList.add("closed"); chime();
+  await sleep(850);
+  if(kind==="pass"){
+    dressBetween(); document.body.classList.add("moving-force");
+    st.classList.add("pass-in"); await sleep(870);
+    renderDeck(true); await sleep(650);
+    st.classList.replace("pass-in","pass-out"); await sleep(870);
+    st.classList.remove("pass-out"); document.body.classList.remove("moving-force");
+    await sleep(250);
+  } else {
+    renderDeck(true); await sleep(500);
+  }
+  st.classList.remove("closed");
+  await sleep(780);
   busy=false;
 }
 $("btnNo").onclick=()=>decide(-1);
 $("btnYes").onclick=()=>decide(1);
 document.addEventListener("keydown",e=>{
-  if(e.target.closest("input,select,textarea,button")) return;
+  if(e.target.closest("input,select,textarea,button")||!$("sheet").hidden) return;
   if(e.key==="ArrowLeft") decide(-1);
   if(e.key==="ArrowRight") decide(1);
 });
@@ -786,7 +853,7 @@ function render(){
     $("stats").innerHTML=`<span>${esc(nl.name)} ${fmtTime(new Date(nl.arr))}${late(nl.delayMin)} · over ${inMin} min</span>`+
       (destL&&!isNaN(destL.arr)?`<span>Aankomst ${esc(S[trip.stops[n-1]].n)} ${fmtTime(new Date(destL.arr))}${late(destL.delayMin)}</span>`:"");
   } else {
-    $("stats").innerHTML=`<span>${esc(S[trip.stops[0]].n)} → ${esc(S[trip.stops[n-1]].n)}</span><span>Aankomst ca. ${fmtTime(new Date(Date.now()+mins*60000))}</span>`;
+    $("stats").innerHTML=`<span>Naar ${esc(S[trip.stops[n-1]].n)} · aankomst ca. ${fmtTime(new Date(Date.now()+mins*60000))}</span>`;
   }
   const ol=$("route"); ol.innerHTML="";
   trip.stops.forEach((k,i)=>{
@@ -822,11 +889,19 @@ $("start").onclick=()=>{
   const [h,m]=($("dep").value||fmtTime(new Date())).split(":").map(Number);
   const d=new Date(); d.setHours(h,m,0,0); if(d-Date.now()>12*3600e3) d.setDate(d.getDate()-1);
   setTrainNr($("trainNr").value);
-  if(trainNr){ $("setup").open=false; $("led").innerHTML=`Rit van trein <b>${esc(trainNr)}</b> wordt opgehaald…`; fetchLive(); return; }
+  if(trainNr){ closeSheet(); $("led").innerHTML=`Rit van trein <b>${esc(trainNr)}</b> wordt opgehaald…`; fetchLive(); return; }
   live=null; trip=buildTrip($("line").value,f,t,d.getTime()); demo=false; saveTrip();
   $("setup").open=false; setupSum(); nearI=-1; render();
   $("led").innerHTML=`Goede reis naar <b>${esc(S[t].n)}</b>. Swipe maar!`;
 };
+
+// ---------- menu ----------
+function openSheet(){ $("sheet").hidden=false; $("sheetClose").focus(); }
+function closeSheet(){ $("sheet").hidden=true; $("menuBtn").focus(); }
+$("menuBtn").onclick=openSheet;
+$("sheetClose").onclick=closeSheet;
+$("sheet").addEventListener("click",e=>{ if(e.target===$("sheet")) closeSheet(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("sheet").hidden) closeSheet(); });
 
 // ---------- GPS ----------
 function startGps(){
@@ -867,7 +942,7 @@ Antwoord met alleen JSON in deze vorm:
     else if(e?.code!=="cancelled") $("led").textContent="Claude kon geen kaarten maken. Probeer het opnieuw.";
   }finally{asking=false;$("aiBtn").disabled=false}
 }
-$("aiBtn").onclick=askClaude;
+$("aiBtn").onclick=()=>{closeSheet(); askClaude();};
 (async()=>{try{sample=window.claude?.use?await window.claude.use("sample"):null}catch{sample=null}
   $("aiBtn").hidden=!sample; if(trip) renderDeck(true)})();
 
