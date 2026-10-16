@@ -260,11 +260,11 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .inside{position:absolute;inset:0;pointer-events:none;z-index:2}
 .inside::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.16) 0 30%,transparent 30% 60%,rgba(255,255,255,.08) 60%)}
 .man{position:absolute;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.man svg{width:100%;height:100%;display:block;transform-origin:50% 100%;animation:bob .42s ease-in-out infinite}
-.man .leg,.man .arm{transform-box:fill-box;transform-origin:50% 0;animation:swing .42s ease-in-out infinite alternate}
+.man svg{width:100%;height:100%;display:block;transform-origin:50% 100%;animation:bob .55s ease-in-out infinite}
+.man .leg,.man .arm{transform-box:fill-box;transform-origin:50% 0;animation:swing .55s cubic-bezier(.45,0,.55,1) infinite alternate}
 .man .leg.b,.man .arm.a{animation-direction:alternate-reverse}
-@keyframes swing{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
-@keyframes bob{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-4px) rotate(-1deg)}}
+@keyframes swing{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(3deg)}50%{transform:translateY(-2px) rotate(4deg)}}
 .bwins4 .bwin{flex:1}
 .passsign{position:absolute;left:18px;right:18px;top:18px;z-index:20;background:var(--display);color:#ffffff;border-radius:6px;padding:7px 12px;box-shadow:inset 0 0 0 3px var(--frame),0 4px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:2px;opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s;pointer-events:none}
 .passsign.on{opacity:1;transform:none}
@@ -943,7 +943,8 @@ async function transit(kind,opt={}){
     const strip=$("strip"), W=$("deck").getBoundingClientRect().width;
     const dist=buildStrip(W,opt);
     strip.hidden=false;
-    const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?3600:3000;
+    const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?4400:3000;
+    let frames=[{transform:"translateX(0)"},{transform:`translateX(${-dist}px)`}], stripEase=EASE;
     const ps=$("passsign"), si=stripInfo;
     ps.innerHTML=`<div class="ps1"><span>${esc(si.name)}</span><b>${esc(si.dest)}</b></div>`;
     ps.classList.add("on");
@@ -967,20 +968,28 @@ async function transit(kind,opt={}){
       inside.appendChild(man); seg.appendChild(inside);
       const W=$("deck").getBoundingClientRect().width, segW=sr.width;
       const target=opt.deck==="up"?upFeet:downFeet;
-      // horizontaal: blijft in beeld terwijl de trein langs schuift (zelfde curve als de strook)
-      // hij loopt iets langzamer dan de camera, zodat hij merkbaar door de coupé loopt
-      const drift=W*.22;
-      extra.push(man.animate([{left:(-W/2-wdt/2+drift)+"px"},{left:(dist-W/2-wdt/2-drift)+"px"}],{duration:DUR,easing:EASE,fill:"forwards"}));
-      // verticaal: vanaf het halletje de trap op of af, en bij de volgende deur weer terug
-      // trap: in treden omhoog/omlaag in plaats van een gladde glijbeweging
+      // Camera: snel naar het poppetje, dan in wandeltempo met hem mee, daarna snel naar de volgende deur.
+      // cs/ce = middelpunt van het beeld (in wagon-coördinaten) aan het begin en eind van het wandelstuk.
+      const cs=segW*.30, ce=segW*.60, T=c=>c+W/2;
+      const A=.27, B=.8;
+      frames=[
+        {transform:"translateX(0)",offset:0,easing:"cubic-bezier(.35,0,.45,1)"},
+        {transform:`translateX(${-T(cs)}px)`,offset:A,easing:"linear"},
+        {transform:`translateX(${-T(ce)}px)`,offset:B,easing:"cubic-bezier(.55,0,.65,1)"},
+        {transform:`translateX(${-dist}px)`,offset:1}];
+      stripEase="linear";
+      // Poppetje: loopt steeds in hetzelfde rustige tempo door de wagon (dus mét de trein mee, niet erlangs).
+      const x=c=>(c-wdt/2)+"px";
       extra.push(man.animate([
-        {top:(midFeet-hgt)+"px",offset:0},{top:(midFeet-hgt)+"px",offset:.14,easing:"steps(6,end)"},
-        {top:(target-hgt)+"px",offset:.38},{top:(target-hgt)+"px",offset:.72,easing:"steps(6,end)"},
-        {top:(midFeet-hgt)+"px",offset:.94},{top:(midFeet-hgt)+"px",offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
+        {left:x(cs-W*.3),offset:0},{left:x(cs),offset:A},{left:x(ce),offset:B},{left:x(ce+W*.2),offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
+      // Trap op of af in treden, tijdens het wandelstuk
+      extra.push(man.animate([
+        {top:(midFeet-hgt)+"px",offset:0},{top:(midFeet-hgt)+"px",offset:A+.02,easing:"steps(6,end)"},
+        {top:(target-hgt)+"px",offset:A+.25},{top:(target-hgt)+"px",offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
     }
     renderDeck(true);
     if(!stopped) document.body.classList.add("moving-force");
-    const anim=strip.animate([{transform:"translateX(0)"},{transform:`translateX(${-dist}px)`}],{duration:DUR,easing:EASE,fill:"forwards"});
+    const anim=strip.animate(frames,{duration:DUR,easing:stripEase,fill:"forwards"});
     try{ await anim.finished }catch{}
     extra.forEach(a=>a.cancel());
     document.body.classList.remove("moving-force");
