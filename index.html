@@ -256,15 +256,6 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .bfloor.low{display:none}
 .rowcls{flex:none;align-self:center;display:grid;place-items:center;width:30px;height:30px;border-radius:5px;background:#ffffff;color:#003082;font-weight:800;font-size:1.1rem;box-shadow:0 0 0 2px #003082}
 .rowcls.first{background:#003082;color:#ffc917;box-shadow:0 0 0 2px #ffc917}
-.walker{display:none!important}
-.inside{position:absolute;inset:0;pointer-events:none;z-index:2}
-.inside::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.16) 0 30%,transparent 30% 60%,rgba(255,255,255,.08) 60%)}
-.man{position:absolute;left:-200px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.man svg{width:100%;height:100%;display:block;transform-origin:50% 100%;animation:bob .55s ease-in-out infinite}
-.man .leg,.man .arm{transform-box:fill-box;transform-origin:50% 0;animation:swing .55s cubic-bezier(.45,0,.55,1) infinite alternate}
-.man .leg.b,.man .arm.a{animation-direction:alternate-reverse}
-@keyframes swing{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
-@keyframes bob{0%,100%{transform:translateY(0) rotate(3deg)}50%{transform:translateY(-2px) rotate(4deg)}}
 .bwins4 .bwin{flex:1}
 .passsign{position:absolute;left:18px;right:18px;top:18px;z-index:20;background:var(--display);color:#ffffff;border-radius:6px;padding:7px 12px;box-shadow:inset 0 0 0 3px var(--frame),0 4px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:2px;opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s;pointer-events:none}
 .passsign.on{opacity:1;transform:none}
@@ -279,7 +270,6 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .bwin i{position:absolute;inset:4px;border-radius:7px;overflow:hidden;background:linear-gradient(180deg,#e9e6dc 0,#d6d2c6 62%,#9b968a 62%,#8a857a)}
 .bwin .far-win{position:absolute;left:10%;right:10%;top:9%;height:44%;border-radius:6px;box-shadow:0 0 0 3px #6b6f78}
 .bwin .far-win .extra{height:60%;max-height:34px;bottom:0}
-.bwin .mslot{position:absolute;inset:0;z-index:1}
 .bwin .seat{position:absolute;z-index:1;bottom:0;width:30%;height:44%;border-radius:10px 10px 2px 2px;background:linear-gradient(180deg,#3d6fc4,#2a4f96);box-shadow:inset 0 4px 0 rgba(255,255,255,.18)}
 .bwin .seat::before{content:"";position:absolute;left:18%;right:18%;top:8%;height:22%;border-radius:4px;background:rgba(255,255,255,.22)}
 .bwin .seat.a{left:6%}.bwin .seat.b{right:6%}
@@ -373,14 +363,6 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       </div>
       <div class="strip" id="strip" aria-hidden="true" hidden></div>
       <div class="passsign" id="passsign" aria-live="polite"></div>
-      <div class="walker" id="walker" aria-hidden="true" hidden><svg viewBox="0 0 22 40" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="5" r="4" fill="#ffd9b3" stroke="#1d1d1d" stroke-width="1.2"/>
-        <path d="M7 3.5c1-3 7-3 8 0" stroke="#5a3a1a" stroke-width="2.2"/>
-        <rect x="6.5" y="10" width="9" height="13" rx="3" fill="#0063d3" stroke="#1d1d1d" stroke-width="1.2"/>
-        <path class="arm a" d="M7 12l-3 8" stroke="#0063d3" stroke-width="2.6"/><path class="arm b" d="M15 12l3 8" stroke="#0063d3" stroke-width="2.6"/>
-        <path class="leg a" d="M9 23l-2 15" stroke="#1d2b4a" stroke-width="3"/><path class="leg b" d="M13 23l2 15" stroke="#1d2b4a" stroke-width="3"/>
-        <rect x="14.5" y="13" width="5" height="6" rx="1" fill="#ffc917" stroke="#1d1d1d" stroke-width=".8"/>
-      </svg></div>
     </section>
 
   </div>
@@ -910,7 +892,7 @@ function winHTML(first){
   const d=-(Math.random()*15).toFixed(2);
   return `<div class="bwin"><i>
     <span class="view far-win"><span class="l far"></span><span class="l trees"></span><span class="l extra" style="animation-delay:${d}s"></span><span class="l poles"></span></span>
-    <span class="mslot"></span><span class="seat a${first?" first":""}"></span><span class="seat b${first?" first":""}"></span>
+    <span class="seat a${first?" first":""}"></span><span class="seat b${first?" first":""}"></span>
   </i></div>`;
 }
 function buildStrip(W,opt={}){
@@ -944,51 +926,13 @@ async function transit(kind,opt={}){
     const strip=$("strip"), W=$("deck").getBoundingClientRect().width;
     const dist=buildStrip(W,opt);
     strip.hidden=false;
-    const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?4400:3000;
+    const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?3400:3000;
     let frames=[{transform:"translateX(0)"},{transform:`translateX(${-dist}px)`}], stripEase=EASE;
     renderDeck(true);
     const ps=$("passsign"), si=stripInfo;
     ps.innerHTML=`<div class="ps1"><span>${esc(si.name)}</span><b>${esc(si.dest)}</b></div>`;
     ps.classList.add("on");
     const extra=[];
-    if(opt.dd){
-      // Poppetje loopt binnen in de trein mee: alleen zichtbaar door de ramen, met de trap op of af.
-      const seg=strip.querySelector(".seg.between"), sr=seg.getBoundingClientRect();
-      const wins=[...seg.querySelectorAll(".bwin i")].map(e=>{const r=e.getBoundingClientRect();return {x:r.left-sr.left,y:r.top-sr.top,w:r.width,h:r.height}});
-      const top=seg.querySelector(".bwins4.top").getBoundingClientRect(), bot=seg.querySelector(".bwins4.bot").getBoundingClientRect();
-      const upFeet=top.bottom-sr.top-6, downFeet=bot.bottom-sr.top-6, midFeet=(upFeet+downFeet)/2;
-      // stoelrug is 44% van de raamhoogte; een staand persoon is ruim 1,6x zo hoog
-      const winH=wins.length?wins[0].h:top.height;
-      const hgt=Math.max(30,winH*.8), wdt=hgt*.55;
-      // Een kopie van het poppetje in elk raam (achter de stoelen). Samen lijkt het één persoon die door de wagon loopt.
-      const slots=[...seg.querySelectorAll(opt.deck==="up"?".bwins4.top .bwin i":".bwins4.bot .bwin i")].map(e=>{const r=e.getBoundingClientRect();return {el:e.querySelector(".mslot"),x:r.left-sr.left,y:r.top-sr.top}});
-      const mans=slots.map(sl=>{const m=document.createElement("div");m.className="man";m.style.width=wdt+"px";m.style.height=hgt+"px";m.innerHTML=$("walker").innerHTML;sl.el.appendChild(m);return {m,sl}});
-      const W=$("deck").getBoundingClientRect().width, segW=sr.width;
-      const target=opt.deck==="up"?upFeet:downFeet;
-      // Naar boven: hij komt van onder de trap omhoog het dek op (eerst verborgen achter de stoelen).
-      // Naar beneden: hij komt van boven de trap af het dek in (eerst boven de raamrand).
-      const startFeet=opt.deck==="up"?target+winH*.75:target-winH*.95;
-      // Camera: snel naar het poppetje, dan in wandeltempo met hem mee, daarna snel naar de volgende deur.
-      // cs/ce = middelpunt van het beeld (in wagon-coördinaten) aan het begin en eind van het wandelstuk.
-      const cs=segW*.30, ce=segW*.60, T=c=>c+W/2;
-      const A=.27, B=.8;
-      frames=[
-        {transform:"translateX(0)",offset:0,easing:"cubic-bezier(.35,0,.45,1)"},
-        {transform:`translateX(${-T(cs)}px)`,offset:A,easing:"linear"},
-        {transform:`translateX(${-T(ce)}px)`,offset:B,easing:"cubic-bezier(.55,0,.65,1)"},
-        {transform:`translateX(${-dist}px)`,offset:1}];
-      stripEase="linear";
-      // Poppetje: loopt steeds in hetzelfde rustige tempo door de wagon (dus mét de trein mee, niet erlangs).
-      for(const {m,sl} of mans){
-        const x=c=>(c-wdt/2-sl.x)+"px", y=f=>(f-hgt-sl.y)+"px";
-        extra.push(m.animate([
-          {left:x(cs-W*.3),offset:0},{left:x(cs),offset:A},{left:x(ce),offset:B},{left:x(ce+W*.2),offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
-        // Trap op of af in treden, tijdens het wandelstuk
-        extra.push(m.animate([
-          {top:y(startFeet),offset:0},{top:y(startFeet),offset:A+.02,easing:"steps(6,end)"},
-          {top:y(target),offset:A+.25},{top:y(target),offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
-      }
-    }
     if(!stopped) document.body.classList.add("moving-force");
     const anim=strip.animate(frames,{duration:DUR,easing:stripEase,fill:"forwards"});
     const t0=document.timeline.currentTime;
