@@ -765,6 +765,10 @@ async function maybeDetect(force){
       .map(x=>({...x,score:x.distM+(moving&&x.dir!=null&&angDiff(x.dir,gps.heading)>90?5000:0)}))
       .filter(x=>x.score<2500).sort((a,b)=>a.score-b.score);
     if(!c.length){lastCand=null;$("liveHint").textContent="Nog geen trein in de buurt gevonden. De app blijft zoeken.";return}
+    // Standaard: kies de dichtstbijzijnde trein (die dezelfde kant op rijdt).
+    // Alleen vragen als het echt onduidelijk is: de dichtstbijzijnde trein is 500 m of verder weg.
+    const best=c[0];
+    if(best.distM<=500){ chooseTrain(best.train); return; }
     if(asked) return;
     asked=true; askWhich(c.slice(0,3));
   }catch(e){$("liveHint").textContent=`Trein zoeken lukt nu niet: ${e.message||"geen verbinding"}.`}
