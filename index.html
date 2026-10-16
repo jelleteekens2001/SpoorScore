@@ -116,6 +116,19 @@ body.moving .view .l{animation-play-state:running}
 .card.board .answer small{color:#c8d4ef}
 .card.board .answer strong{color:#ffffff}
 .card.board .cfoot{margin-top:auto;background:#ffffff;color:#003082;font-weight:700;padding:7px 14px;border-radius:0 0 8px 8px;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.result.board,.card.result.board.ok,.card.result.board.bad{background:#003082;color:#ffffff}
+.card.result.board .band .kind,.card.result.board.ok .band .kind,.card.result.board.bad .band .kind{background:none;padding:0}
+.card.result.board .band .verdictk{font-size:1.05rem;font-weight:800}
+.card.result.board.ok .band .verdictk{color:#5fe39a}
+.card.result.board.bad .band .verdictk{color:#ff8a9a}
+.card.result.board .said{color:#c8d4ef;margin:0;font-size:.9rem}
+.card.result.board .said b{color:#ffffff}
+.card.result.board .qtext{margin:0;font-weight:700;color:#ffffff;font-size:1.05rem;line-height:1.3}
+.card.result.board.ok .answer{border-left-color:#5fe39a}
+.card.result.board.bad .answer{border-left-color:#ff8a9a}
+.card.result.board .expl{margin:0;color:#e3e9f7;font-size:.92rem}
+.card.result.board .cbody{padding:12px 16px 10px;gap:9px}
+.nextbar{border:0;width:100%;text-align:center;cursor:pointer;font-family:inherit;background:#ffc917!important;color:#003082!important;font-size:.95rem!important;padding:11px 14px!important}
 .card.board .stamp{background:#ffffff;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.05rem}
 .deckopt{display:flex;align-items:baseline;gap:10px;background:#ffffff;color:#003082;border-radius:6px;padding:8px 12px;min-width:0}
 .deckopt small{flex:none;font-size:.72rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;opacity:.8}
@@ -211,6 +224,17 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .seg.doorseg .door{transform:none!important;transition:none}
 .seg.between{background:var(--yellow);display:flex;flex-direction:column;gap:10px;padding:12px 14px 0;border-left:4px solid var(--seal);border-right:4px solid var(--seal)}
 .bwins4{flex:1;min-height:0;display:flex;gap:14px}
+.seg.between.dd{gap:6px}
+.seg.between.dd .bwin{max-height:none}
+.bfloor{position:relative;height:6px;margin:0 -14px;background:#c99a00}
+.bfloor span{position:absolute;right:16px;top:-15px;font-size:.62rem;font-weight:800;color:#003082;text-transform:uppercase;letter-spacing:.06em}
+.bfloor.low{display:none}
+.walker{position:absolute;left:50%;z-index:14;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.walker svg{width:100%;height:100%;display:block;animation:bob .5s ease-in-out infinite}
+.walker .leg,.walker .arm{transform-box:fill-box;transform-origin:50% 0;animation:swing .5s ease-in-out infinite alternate}
+.walker .leg.b,.walker .arm.a{animation-direction:alternate-reverse}
+@keyframes swing{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+@keyframes bob{50%{transform:translateY(-1.5px)}}
 .bwins4 .bwin{flex:1}
 .bdest{display:flex;align-items:baseline;gap:10px;background:var(--display);color:var(--disp-ink);border-radius:6px;padding:6px 10px;box-shadow:inset 0 0 0 3px var(--frame);font-size:.85rem;white-space:nowrap;overflow:hidden}
 .bdest span{color:var(--disp-hi);font-weight:700}
@@ -303,6 +327,14 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
         <div class="door r"><span class="knob"></span></div>
       </div>
       <div class="strip" id="strip" aria-hidden="true" hidden></div>
+      <div class="walker" id="walker" aria-hidden="true" hidden><svg viewBox="0 0 22 40" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="5" r="4" fill="#ffd9b3" stroke="#1d1d1d" stroke-width="1.2"/>
+        <path d="M7 3.5c1-3 7-3 8 0" stroke="#5a3a1a" stroke-width="2.2"/>
+        <rect x="6.5" y="10" width="9" height="13" rx="3" fill="#0063d3" stroke="#1d1d1d" stroke-width="1.2"/>
+        <path class="arm a" d="M7 12l-3 8" stroke="#0063d3" stroke-width="2.6"/><path class="arm b" d="M15 12l3 8" stroke="#0063d3" stroke-width="2.6"/>
+        <path class="leg a" d="M9 23l-2 15" stroke="#1d2b4a" stroke-width="3"/><path class="leg b" d="M13 23l2 15" stroke="#1d2b4a" stroke-width="3"/>
+        <rect x="14.5" y="13" width="5" height="6" rx="1" fill="#ffc917" stroke="#1d1d1d" stroke-width=".8"/>
+      </svg></div>
     </section>
 
   </div>
@@ -697,24 +729,22 @@ function cardHTML(c,cls){
 }
 function resultHTML(p){
   const c=p.c;
-  if(c.type==="fact") return `<div class="card top result ${p.ok?"ok":"bad"}">
-    <div class="band"><span class="kind">${p.ok?"Goed":"Fout"}</span><span class="where">${esc(S[c.k].n)}</span></div>
-    <div class="cbody">
-      <div class="verdict">${p.ok?"Goed!":"Helaas"}</div>
-      <p class="said">Jij zei: ${p.dir>0?"waar":"niet waar"}. Deze stelling was ${c.correct?"waar":"niet waar"}.</p>
-      <div class="answer"><small>${c.correct?"Het feit":"Zo zit het echt"}</small><strong style="font-size:1.05rem">${esc(c.truth)}</strong></div>
-    </div>
-    <div class="cfoot"><button class="btn wide" type="button" data-act="next">Volgende kaart</button></div></div>`;
-  return `<div class="card top result ${p.ok?"ok":"bad"}">
-    <div class="band"><span class="kind">${p.ok?"Goed":"Fout"}</span><span class="where">${esc(S[c.k].n)}</span></div>
-    <div class="cbody">
-      <div class="verdict">${p.ok?"Goed!":"Helaas"}</div>
-      <p class="said">Jij koos "${esc(p.dir>0?c.rightOpt:c.left)}".</p>
+  const head=`<div class="band"><span class="btime">${boardTime(c)}</span><span class="kind verdictk">${p.ok?"✓ Goed!":"✕ Helaas"}</span><span class="spoor"><small>SPOOR</small><b>${spoorOf(c)}</b></span></div>`;
+  const via="";
+  const foot=`<button class="cfoot nextbar" type="button" data-act="next">Volgende kaart →</button>`;
+  if(c.type==="fact") return `<div class="card top result board ${p.ok?"ok":"bad"}">${head}
+    <div class="cbody">${via}
+      <p class="said">Jij zei <b>${p.dir>0?"waar":"niet waar"}</b>. Deze stelling was ${c.correct?"waar":"niet waar"}.</p>
+      <div class="answer"><small>${c.correct?"Het feit":"Zo zit het echt"}</small><strong>${esc(c.truth)}</strong></div>
+    </div>${foot}</div>`;
+  const chose=p.dir>0?c.rightOpt:c.left;
+  return `<div class="card top result board ${p.ok?"ok":"bad"}">${head}
+    <div class="cbody">${via}
       <p class="qtext">${esc(c.q)}</p>
+      <p class="said">Jij koos <b>${esc(chose)}</b> (${p.dir>0?"benedendek":"bovendek"}).</p>
       <div class="answer"><small>Juiste antwoord</small><strong>${esc(c.right)}</strong></div>
       ${c.e?`<p class="expl">${esc(c.e)}</p>`:""}
-    </div>
-    <div class="cfoot"><button class="btn wide" type="button" data-act="next">Volgende kaart</button></div></div>`;
+    </div>${foot}</div>`;
 }
 let pending=null;
 function renderDeck(force){
@@ -811,7 +841,7 @@ async function decide(dir){
   const ok=(dir>0)===c.correct; results[c.id]=ok; store.set("sq2-res",results);
   $("led").innerHTML = `Jij kiest <b>${esc(c.type==="tf"?(dir>0?c.rightOpt:c.left):(dir>0?"waar":"niet waar"))}</b>. Het antwoord staat achter de volgende deur…`;
   pending={c,ok,dir};
-  await transit("pass");
+  await transit("pass", c.type==="tf"?{dd:true,deck:dir>0?"down":"up"}:{});
   updateScore();
   $("led").innerHTML = `<span class="${ok?"ok":"bad"}"><b>${ok?"Goed!":"Helaas."}</b></span> Swipe of tik op "Volgende kaart" als je klaar bent met lezen.`;
   busy=false;
@@ -820,7 +850,7 @@ let passCount=0;
 const DOOR_SEG='<div class="door l"><span class="knob"></span></div><div class="door r"><span class="knob"></span></div>';
 const QUIET_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>';
 const BIKE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8"/></svg>';
-function buildStrip(W){
+function buildStrip(W,opt={}){
   passCount++;
   const h=hash(String(passCount)+trip.stops.join());
   const first=h%10<3, quiet=h%10>=6, bike=!first&&h%7===0;
@@ -828,9 +858,9 @@ function buildStrip(W){
   const winW=Math.round(W*2.4);
   $("strip").innerHTML=
     `<div class="seg doorseg" style="width:${W}px">${DOOR_SEG}</div>`+
-    `<div class="seg between" style="width:${winW}px">
+    `<div class="seg between${opt.dd?" dd":""}" style="width:${winW}px">
        <div class="bdest"><span>${esc(name)}</span><b>${esc(dest)}</b></div>
-       <div class="bwins4">${'<div class="bwin"><i></i></div>'.repeat(4)}</div>
+       ${opt.dd?`<div class="bwins4 top">${'<div class="bwin"><i></i></div>'.repeat(4)}</div><div class="bfloor"><span>Bovendek</span></div><div class="bwins4 bot">${'<div class="bwin"><i></i></div>'.repeat(4)}</div><div class="bfloor low"><span>Benedendek</span></div>`:`<div class="bwins4">${'<div class="bwin"><i></i></div>'.repeat(4)}</div>`}
        <div class="bmarks">
          <span class="bclass${first?" first":""}">${first?"1":"2"}</span><span class="blabel">${first?"1e klas":"2e klas"}</span>
          ${quiet?`<span class="bpill">${QUIET_SVG}Stiltecoupé</span>`:""}
@@ -842,21 +872,30 @@ function buildStrip(W){
   return W+winW;
 }
 // Deuren dicht -> (bij "pass") een stuk trein met ramen schuift voorbij tot de volgende deur -> die deur gaat open met de nieuwe inhoud.
-async function transit(kind){
+async function transit(kind,opt={}){
   const st=$("stage");
   if(reduced){ renderDeck(true); return; }
   st.classList.add("closed"); chime();
   await sleep(850);
   if(kind==="pass"){
     const strip=$("strip"), W=$("deck").getBoundingClientRect().width;
-    const dist=buildStrip(W);
+    const dist=buildStrip(W,opt);
     strip.hidden=false;
+    const walker=$("walker");
+    if(opt.dd){
+      const row=strip.querySelector(opt.deck==="up"?".bwins4.top":".bwins4.bot").getBoundingClientRect();
+      const sr=st.getBoundingClientRect();
+      const hgt=Math.max(34,Math.min(row.height*.9,74));
+      walker.style.height=hgt+"px"; walker.style.width=(hgt*.55)+"px";
+      walker.style.top=(row.bottom-sr.top-hgt-2)+"px";
+      walker.hidden=false;
+    }
     renderDeck(true);
     document.body.classList.add("moving-force");
     const anim=strip.animate([{transform:"translateX(0)"},{transform:`translateX(${-dist}px)`}],{duration:2400,easing:"cubic-bezier(.45,0,.35,1)",fill:"forwards"});
     try{ await anim.finished }catch{}
     document.body.classList.remove("moving-force");
-    strip.hidden=true; anim.cancel();
+    strip.hidden=true; anim.cancel(); walker.hidden=true;
     await sleep(250);
   } else {
     renderDeck(true); await sleep(500);
