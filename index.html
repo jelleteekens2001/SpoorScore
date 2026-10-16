@@ -143,9 +143,7 @@ body.moving .view .l{animation-play-state:running}
 .door .knob{position:absolute;top:60%;width:30px;height:30px;border-radius:50%;background:#ffffff;box-shadow:inset 0 0 0 5px #008a3e,0 0 0 2px #003082}
 .door.l .knob{right:14px}.door.r .knob{left:14px}
 .stage.closed .door{transform:none}
-.sigtext{position:absolute;left:50%;top:71%;transform:translateX(-50%);white-space:nowrap;z-index:2;font-family:var(--f-mono);font-weight:700;font-size:.74rem;letter-spacing:.1em;color:var(--disp-hi);background:var(--display);padding:4px 10px;border-radius:4px;opacity:0;transition:opacity .25s .35s}
-.stage.closed .sigtext{opacity:1}
-
+.stage.closed 
 .controls{flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 4px}
 .round{width:54px;height:54px;border-radius:50%;border:0;display:grid;place-items:center;transition:transform .12s}
 .round:active{transform:scale(.92)}
@@ -273,7 +271,6 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       <div class="doors" aria-hidden="true">
         <div class="door l"><span class="knob"></span></div>
         <div class="door r"><span class="knob"></span></div>
-        <div class="sigtext">DEUREN SLUITEN</div>
       </div>
       <div class="strip" id="strip" aria-hidden="true" hidden></div>
     </section>
