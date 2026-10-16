@@ -77,6 +77,8 @@ body.moving .view .l{animation-play-state:running}
 .view .trees{height:46%;bottom:22%;--w:150px;animation-duration:2.6s;
   background:radial-gradient(circle at 26px 100%,var(--tree) 0 13px,transparent 14px) 0 100%/150px 100% repeat-x,radial-gradient(circle at 52px 100%,var(--tree) 0 9px,transparent 10px) 0 100%/150px 100% repeat-x,radial-gradient(circle at 112px 100%,var(--tree) 0 11px,transparent 12px) 0 100%/150px 100% repeat-x}
 .view .poles{top:0;bottom:0;--w:190px;animation-duration:.9s;background:linear-gradient(90deg,var(--pole) 0 3px,transparent 3px) 0 0/190px 100% repeat-x}
+.view .extra{height:34px;bottom:2px;--w:900px;animation-duration:15.6s;background:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 34"%3E %3Cg transform="translate(70 0)"%3E %3Crect x="4" y="13" width="26" height="12" rx="5" fill="%23fff" stroke="%23222" stroke-width="1"/%3E %3Cpath d="M9 14c3 2 6 1 7 5-3 3-7 1-8-1zM20 21c2-3 6-3 7 0-2 3-5 2-7 0z" fill="%23222"/%3E %3Crect x="28" y="10" width="9" height="8" rx="3" fill="%23fff" stroke="%23222" stroke-width="1"/%3E %3Crect x="33" y="14" width="5" height="4" rx="2" fill="%23f4b6b6"/%3E %3Cpath d="M29 10l-2-3M35 10l2-3" stroke="%23222" stroke-width="1.4" stroke-linecap="round"/%3E %3Cpath d="M8 25v8M13 25v8M23 25v8M28 25v8" stroke="%23222" stroke-width="2" stroke-linecap="round"/%3E %3Cpath d="M4 16c-3 2-3 6-2 9" stroke="%23222" stroke-width="1" fill="none"/%3E %3C/g%3E %3Cg transform="translate(560 0)"%3E %3Cpath d="M10 34l3-20h8l3 20z" fill="%237a4a2a"/%3E %3Cpath d="M11 14h12l-6-5z" fill="%234a2c18"/%3E %3Cg stroke="%233a2a1e" stroke-width="2.2" stroke-linecap="round"%3E%3Cpath d="M17 11L5 -1M17 11l12 12M17 11L29 -1M17 11L5 23"/%3E%3C/g%3E %3Cg fill="%23f3ead8" opacity=".9"%3E%3Cpath d="M7 1l4 4-2 2-4-4zM27 1l-4 4 2 2 4-4zM7 21l4-4-2-2-4 4zM27 21l-4-4 2-2 4 4z"/%3E%3C/g%3E %3Ccircle cx="17" cy="11" r="2" fill="%23222"/%3E %3Crect x="15" y="26" width="4" height="8" fill="%233a2a1e"/%3E %3C/g%3E %3Cg transform="translate(330 0)"%3E %3Crect x="4" y="15" width="22" height="10" rx="4" fill="%235a3a24" stroke="%23222" stroke-width="1"/%3E %3Crect x="24" y="12" width="8" height="7" rx="3" fill="%235a3a24" stroke="%23222" stroke-width="1"/%3E %3Cpath d="M8 25v8M12 25v8M19 25v8M23 25v8" stroke="%23222" stroke-width="2" stroke-linecap="round"/%3E %3C/g%3E %3C/svg%3E') 0 100%/900px 34px repeat-x}
+.win:nth-child(2) .view .extra{animation-delay:-6s}
 .view .wire{position:absolute;left:0;right:0;top:16%;height:1px;background:var(--pole)}
 .view::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.28) 0 18%,transparent 18% 32%,rgba(255,255,255,.12) 32% 38%,transparent 38%);pointer-events:none}
 @keyframes slide{from{background-position-x:0}to{background-position-x:calc(-1 * var(--w))}}
@@ -115,9 +117,13 @@ body.moving .view .l{animation-play-state:running}
 .card.board .answer strong{color:#ffffff}
 .card.board .cfoot{margin-top:auto;background:#ffffff;color:#003082;font-weight:700;padding:7px 14px;border-radius:0 0 8px 8px;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card.board .stamp{background:#ffffff;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.05rem}
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}
-.choices .opt{background:#ffffff;color:#003082;border-radius:6px;padding:10px 12px;font-weight:800;font-size:1.02rem;line-height:1.2;min-width:0;overflow-wrap:anywhere}
-.choices .opt.r{text-align:right;background:#ffc917}
+.deckopt{display:flex;align-items:baseline;gap:10px;background:#ffffff;color:#003082;border-radius:6px;padding:8px 12px;min-width:0}
+.deckopt small{flex:none;font-size:.72rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;opacity:.8}
+.deckopt b{font-size:1.05rem;font-weight:800;line-height:1.2;overflow-wrap:anywhere;min-width:0}
+.deckopt.down{background:#ffc917;margin-top:auto}
+.card.tf .cbody{gap:10px}
+.card.tf .stamp.no{top:16px;left:50%;right:auto;transform:translateX(-50%) rotate(-3deg)}
+.card.tf .stamp.yes{top:auto;bottom:46px;left:50%;transform:translateX(-50%) rotate(3deg)}
 .ctl span{max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card.top.dragging{cursor:grabbing}
 .band{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:.78rem;font-weight:700}
@@ -191,6 +197,9 @@ body.moving .view .l{animation-play-state:running}
 .bogie::before{content:"";position:absolute;left:0;right:0;top:8px;height:7px;background:var(--frame);border-radius:3px}
 .wheel{position:relative;width:26px;height:26px;border-radius:50%;background:conic-gradient(var(--wheel-hi) 0 10deg,var(--wheel) 10deg 90deg,var(--wheel-hi) 90deg 100deg,var(--wheel) 100deg 180deg,var(--wheel-hi) 180deg 190deg,var(--wheel) 190deg 270deg,var(--wheel-hi) 270deg 280deg,var(--wheel) 280deg);box-shadow:inset 0 0 0 4px var(--wheel),0 0 0 2px var(--seal);animation:spin .6s linear infinite;animation-play-state:paused}
 body.moving .wheel{animation-play-state:running}
+.rails{animation:rails .45s linear infinite;animation-play-state:paused}
+body.moving .rails,body.moving-force .rails{animation-play-state:running}
+@keyframes rails{from{background-position:0 0,0 4px}to{background-position:0 0,-34px 4px}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .rails{flex:none;height:12px;background:linear-gradient(var(--rail) 0 4px,transparent 4px),repeating-linear-gradient(90deg,var(--sleeper) 0 14px,transparent 14px 34px) 0 4px/100% 8px no-repeat}
 
@@ -255,7 +264,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
 .foot{font-size:.8rem;color:var(--muted);text-align:center;margin:0}
 @media (max-height:690px){.windows{display:none}.dest h2{font-size:1.2rem}.card.board .bvia{display:none}.card.board .cbody{padding-top:12px;gap:10px}.cbody .big{font-size:1.15rem}.cbody .big.long{font-size:1.02rem}.answer strong{font-size:1.05rem}.dest .led{max-height:2.9em}}
 @media (max-height:600px){.under{display:none}.ctr{display:none}.round{width:46px;height:46px}}
-@media (prefers-reduced-motion:reduce){.door,.track i,.track b,.round{transition:none}.view .l,.wheel{animation:none}}
+@media (prefers-reduced-motion:reduce){.rails{animation:none}.door,.track i,.track b,.round{transition:none}.view .l,.wheel{animation:none}}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 </head>
@@ -275,8 +284,8 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
     </header>
 
     <div class="windows" aria-hidden="true">
-      <div class="win"><div class="view"><div class="l far"></div><div class="l trees"></div><div class="wire"></div><div class="l poles"></div></div></div>
-      <div class="win"><div class="view"><div class="l far"></div><div class="l trees"></div><div class="wire"></div><div class="l poles"></div></div></div>
+      <div class="win"><div class="view"><div class="l far"></div><div class="l trees"></div><div class="l extra"></div><div class="wire"></div><div class="l poles"></div></div></div>
+      <div class="win"><div class="view"><div class="l far"></div><div class="l trees"></div><div class="l extra"></div><div class="wire"></div><div class="l poles"></div></div></div>
     </div>
 
     <section class="dest" aria-live="polite">
@@ -681,9 +690,9 @@ function cardHTML(c,cls){
     <span class="stamp yes">Waar</span><span class="stamp no">Niet waar</span></div>`;
   return `<div class="card board tf ${cls}" data-id="${esc(c.id)}">
     ${head(c.ai?"Claude vraagt":"Vraag")}
-    <div class="cbody">${via}<p class="big${longCls(c.q)}">${esc(c.q)}</p>
-      <div class="choices"><span class="opt l">← ${esc(c.left)}</span><span class="opt r">${esc(c.rightOpt)} →</span></div></div>
-    <div class="cfoot">Swipe naar het antwoord dat jij denkt</div>
+    <div class="cbody"><div class="deckopt up"><small>↑ Bovendek</small><b>${esc(c.left)}</b></div>${via}<p class="big${longCls(c.q)}">${esc(c.q)}</p>
+      <div class="deckopt down"><small>↓ Benedendek</small><b>${esc(c.rightOpt)}</b></div></div>
+    <div class="cfoot">Swipe omhoog of omlaag naar je antwoord</div>
     <span class="stamp yes">${esc(c.rightOpt)}</span><span class="stamp no">${esc(c.left)}</span></div>`;
 }
 function resultHTML(p){
@@ -736,7 +745,7 @@ function renderDeck(force){
   bindDrag(deck.querySelector(".card.top"));
   setControls(top);
 }
-const ICON_CHECK='<path d="M5 12.5l4.5 4.5L19 7.5"/>', ICON_NEXT='<path d="M5 12h13M13 6l6 6-6 6"/>', ICON_PREV='<path d="M19 12H6M11 6l-6 6 6 6"/>', ICON_X='<path d="M6 6l12 12M18 6L6 18"/>';
+const ICON_CHECK='<path d="M5 12.5l4.5 4.5L19 7.5"/>', ICON_NEXT='<path d="M5 12h13M13 6l6 6-6 6"/>', ICON_PREV='<path d="M19 12H6M11 6l-6 6 6 6"/>', ICON_X='<path d="M6 6l12 12M18 6L6 18"/>', ICON_UP='<path d="M12 19V6M6 11l6-6 6 6"/>', ICON_DOWN='<path d="M12 5v13M6 13l6 6 6-6"/>';
 function setControls(c){
   $("btnNo").disabled=$("btnYes").disabled=!c;
   if(!c) return;
@@ -744,8 +753,8 @@ function setControls(c){
   const tf=c.type==="tf";
   $("lblNo").textContent=tf?c.left:"Niet waar";
   $("lblYes").textContent=tf?c.rightOpt:"Waar";
-  $("yesIcon").innerHTML=tf?ICON_NEXT:ICON_CHECK;
-  $("noIcon").innerHTML=tf?ICON_PREV:ICON_X;
+  $("yesIcon").innerHTML=tf?ICON_DOWN:ICON_CHECK;
+  $("noIcon").innerHTML=tf?ICON_UP:ICON_X;
 }
 
 // ---------- swipen ----------
@@ -753,10 +762,12 @@ function bindDrag(el){
   if(!el) return;
   let id=null,x0=0,y0=0,dx=0,dy=0,t0=0,raf=0;
   const yes=el.querySelector(".stamp.yes"), no=el.querySelector(".stamp.no");
+  const vert=el.classList.contains("tf");
   const paint=()=>{raf=0;
-    el.style.transform=`translate(${dx}px,${dy*.15}px) rotate(${dx/22}deg)`;
-    if(yes) yes.style.opacity=Math.max(0,Math.min(1,dx/70));
-    if(no) no.style.opacity=Math.max(0,Math.min(1,-dx/70));
+    const m=vert?dy:dx;
+    el.style.transform=vert?`translate(${dx*.12}px,${dy}px)`:`translate(${dx}px,${dy*.15}px) rotate(${dx/22}deg)`;
+    if(yes) yes.style.opacity=Math.max(0,Math.min(1,m/70));
+    if(no) no.style.opacity=Math.max(0,Math.min(1,-m/70));
   };
   el.addEventListener("pointerdown",e=>{
     if(busy||e.button>0||e.target.closest("button")) return;
@@ -774,9 +785,10 @@ function bindDrag(el){
     if(e.pointerId!==id) return;
     id=null; dragging=false; el.classList.remove("dragging");
     if(raf){cancelAnimationFrame(raf);raf=0}
-    const v=Math.abs(dx)/Math.max(1,performance.now()-t0);
-    const limit=Math.min(90,el.offsetWidth*.22);
-    if(Math.abs(dx)>limit||(Math.abs(dx)>30&&v>.35)) decide(dx>0?1:-1);
+    const m=vert?dy:dx;
+    const v=Math.abs(m)/Math.max(1,performance.now()-t0);
+    const limit=Math.min(90,(vert?el.offsetHeight:el.offsetWidth)*.2);
+    if(Math.abs(m)>limit||(Math.abs(m)>30&&v>.35)) decide(m>0?1:-1);
     else { el.style.transition="transform .25s ease-out"; el.style.transform=""; if(yes)yes.style.opacity=0; if(no)no.style.opacity=0; }
   };
   el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
@@ -785,7 +797,7 @@ async function fling(el,dir){
   if(!el) return;
   el.style.transition="transform .32s ease-in";
   const st=el.querySelector(dir>0?".stamp.yes":".stamp.no"); if(st) st.style.opacity=1;
-  el.style.transform=`translate(${dir*(el.offsetWidth+120)}px,-24px) rotate(${dir*24}deg)`;
+  el.style.transform=el.classList.contains("tf")?`translate(0,${dir*(el.offsetHeight+80)}px)`:`translate(${dir*(el.offsetWidth+120)}px,-24px) rotate(${dir*24}deg)`;
   await sleep(reduced?0:300);
 }
 async function decide(dir){
@@ -863,8 +875,8 @@ $("btnNo").onclick=()=>decide(-1);
 $("btnYes").onclick=()=>decide(1);
 document.addEventListener("keydown",e=>{
   if(e.target.closest("input,select,textarea,button")||!$("sheet").hidden) return;
-  if(e.key==="ArrowLeft") decide(-1);
-  if(e.key==="ArrowRight") decide(1);
+  if(e.key==="ArrowLeft"||e.key==="ArrowUp") decide(-1);
+  if(e.key==="ArrowRight"||e.key==="ArrowDown") decide(1);
 });
 
 // ---------- gong ----------
