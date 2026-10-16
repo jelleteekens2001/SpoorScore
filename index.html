@@ -138,6 +138,11 @@ body.moving .view .l{animation-play-state:running}
 .card.board .cfoot.info .rd b{font-weight:700}
 .card.board .cfoot.info .late{color:#db0029;font-weight:800}
 .card.board .stamp{background:#ffffff;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.05rem}
+.tfopts{margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tfopt{border:0;font:inherit;font-weight:800;font-size:1.05rem;cursor:pointer;border-radius:6px;padding:12px 10px;background:#ffffff;color:#003082;box-shadow:0 2px 0 rgba(0,0,0,.25);transition:transform .1s}
+.tfopt.yes{background:#ffc917}
+.tfopt:active{transform:translateY(1px) scale(.99)}
+.tfopt:focus-visible{outline:3px solid #ffc917;outline-offset:2px}
 .deckopts{margin-top:auto;display:flex;flex-direction:column;gap:8px}
 .deckopt{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;border:0;font:inherit;cursor:pointer;background:#ffffff;color:#003082;border-radius:6px;padding:10px 12px;min-width:0;box-shadow:0 2px 0 rgba(0,0,0,.25);transition:transform .1s}
 .deckopt:active{transform:translateY(1px) scale(.99)}
@@ -301,7 +306,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
 .route li.passed .name{color:var(--muted);font-weight:400}
 .route .km{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .foot{font-size:.8rem;color:var(--muted);text-align:center;margin:0}
-@media (max-height:690px){.card.board.tf .cfoot{display:none}.deckopt{padding:7px 10px}.deckopts{gap:6px}.card.board.tf .cbody{padding-bottom:12px}.windows{display:none}.dest h2{font-size:1.2rem}.card.board .bvia{display:none}.card.board .cbody{padding-top:12px;gap:10px}.cbody .big{font-size:1.15rem}.cbody .big.long{font-size:1.02rem}.answer strong{font-size:1.05rem}.dest .led{max-height:2.9em}}
+@media (max-height:690px){.tfopt{padding:9px 8px}.card.board.tf .cfoot{display:none}.deckopt{padding:7px 10px}.deckopts{gap:6px}.card.board.tf .cbody{padding-bottom:12px}.windows{display:none}.dest h2{font-size:1.2rem}.card.board .bvia{display:none}.card.board .cbody{padding-top:12px;gap:10px}.cbody .big{font-size:1.15rem}.cbody .big.long{font-size:1.02rem}.answer strong{font-size:1.05rem}.dest .led{max-height:2.9em}}
 @media (max-height:600px){.under{display:none}.ctr{display:none}.round{width:46px;height:46px}}
 @media (prefers-reduced-motion:reduce){.rails{animation:none}.door,.track i,.track b,.round{transition:none}.view .l,.wheel{animation:none}}
 </style>
@@ -730,7 +735,8 @@ function cardHTML(c,cls){
   const via="";
   if(c.type==="fact") return `<div class="card board ${cls}" data-id="${esc(c.id)}">
     ${head(c.ai?"Stelling van Claude":"Waar of niet waar?")}
-    <div class="cbody">${via}<p class="big${longCls(c.text)}">${esc(c.text)}</p></div>
+    <div class="cbody">${via}<p class="big${longCls(c.text)}">${esc(c.text)}</p>
+      <div class="tfopts"><button type="button" class="tfopt no" data-act="false">✕ Niet waar</button><button type="button" class="tfopt yes" data-act="true">✓ Waar</button></div></div>
     <div class="cfoot info">${infoInner()}</div>
     <span class="stamp yes">Waar</span><span class="stamp no">Niet waar</span></div>`;
   return `<div class="card board tf ${cls}" data-id="${esc(c.id)}">
@@ -789,6 +795,8 @@ function renderDeck(force){
   const topEl=deck.querySelector(".card.top");
   topEl.querySelector('[data-act="up"]')?.addEventListener("click",()=>decide(-1));
   topEl.querySelector('[data-act="down"]')?.addEventListener("click",()=>decide(1));
+  topEl.querySelector('[data-act="false"]')?.addEventListener("click",()=>decide(-1));
+  topEl.querySelector('[data-act="true"]')?.addEventListener("click",()=>decide(1));
   bindDrag(topEl);
   setControls(top);
 }
@@ -925,7 +933,7 @@ async function transit(kind,opt={}){
         {top:(midFeet-hgt)+"px",offset:.92},{top:(midFeet-hgt)+"px",offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
     }
     renderDeck(true);
-    document.body.classList.add("moving-force");
+    if(!stopped) document.body.classList.add("moving-force");
     const anim=strip.animate([{transform:"translateX(0)"},{transform:`translateX(${-dist}px)`}],{duration:DUR,easing:EASE,fill:"forwards"});
     try{ await anim.finished }catch{}
     extra.forEach(a=>a.cancel());
@@ -979,6 +987,18 @@ function resetSeen(){ seen.clear(); store.set("sq2-seen",[]); renderDeck(true); 
 $("reset").onclick=resetSeen;
 
 // ---------- stationsbord & route ----------
+let stopped=false;
+// Staat de trein nu echt stil op een station?
+function isStopped(c,total){
+  if(pos<0||c>=total-.3) return true;
+  const now=Date.now(), ls=liveStops().filter(x=>!x.passing);
+  if(ls.length){
+    if(!isNaN(ls[0].dep)&&now<ls[0].dep) return true;
+    return ls.some(x=>!isNaN(x.arr)&&!isNaN(x.dep)&&now>=x.arr&&now<x.dep);
+  }
+  if(gps&&gps.speed!=null&&!isNaN(gps.speed)&&project(gps).d<1) return gps.speed<1.5;
+  return Math.abs(trip.cum[nearestIdx(c)]-c)<0.6;
+}
 function nextInfo(){
   const total=trip.cum.at(-1), c=Math.max(0,Math.min(total,pos));
   let n=trip.cum.findIndex(x=>x>c+.3); if(n<0) n=trip.stops.length-1;
@@ -988,6 +1008,12 @@ function nextInfo(){
 }
 function infoInner(){
   const i=nextInfo(), dest=S[trip.stops.at(-1)].n;
+  if(stopped&&pos>=0){
+    const c=Math.max(0,Math.min(trip.cum.at(-1),pos)), here=S[trip.stops[nearestIdx(c)]].n;
+    const lv=liveStops().find(x=>norm(x.name)===norm(here));
+    const dep=lv&&!isNaN(lv.dep)?` · vertrek ${fmtTime(new Date(lv.dep))}${lv.delayMin>0?` <span class="late">+${lv.delayMin}</span>`:""}`:"";
+    return `<span class="nx">Nu op station <b>${esc(here)}</b>${dep}</span><span class="rd">Deze trein rijdt richting <b>${esc(dest)}</b></span>`;
+  }
   return `<span class="nx">Volgende halte <b>${esc(i.name)}</b> ${fmtTime(new Date(i.t))}${i.delay>0?` <span class="late">+${i.delay}</span>`:""}</span><span class="rd">Deze trein rijdt richting <b>${esc(dest)}</b></span>`;
 }
 function refreshInfo(){ document.querySelectorAll(".cfoot.info").forEach(el=>{el.innerHTML=infoInner()}); }
@@ -998,7 +1024,8 @@ function render(){
   let next=trip.cum.findIndex(x=>x>c+.3); if(next<0) next=n-1;
   const prevNear=nearI; nearI=nearestIdx(c);
   const at=Math.abs(trip.cum[nearI]-c)<1.5;
-  document.body.classList.toggle("moving", pos>=0 && c<total-.3 && !at);
+  stopped=isStopped(c,total);
+  document.body.classList.toggle("moving", !stopped);
   $("mode").classList.toggle("warn",P.src==="time");
   $("modeTxt").textContent=P.src==="gps"?(live?"GPS + NS-tijden":"GPS live"):P.src==="ns"?"NS-tijden":"Tijd-schatting";
   let eb,title;
