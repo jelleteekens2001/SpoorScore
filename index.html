@@ -95,7 +95,7 @@ body.moving .view .l{animation-play-state:running}
 
 /* deur met kaarten */
 .stage{position:relative;flex:1;min-height:210px;background:var(--frame);border-radius:12px 12px 4px 4px;padding:8px;box-shadow:inset 0 0 0 3px var(--seal),0 0 0 3px var(--yellow-dark)}
-.deck{position:absolute;inset:8px;border-radius:8px;overflow:hidden;touch-action:none;background:var(--seal)}
+.deck{position:absolute;inset:8px;border-radius:8px;overflow:hidden;touch-action:none;background:linear-gradient(180deg,#9aa0ab,#7d838f 70%,#5f6571)}
 .card{position:absolute;inset:0;background:var(--surface);border-radius:8px;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;will-change:transform;touch-action:none}
 .card.back1{transform:translateY(8px) scale(.97);filter:brightness(.93)}
 .card.back2{transform:translateY(16px) scale(.94);filter:brightness(.86)}
@@ -239,7 +239,7 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .seg{position:relative;flex:none;height:100%}
 .seg.doorseg{background:var(--frame)}
 .seg.doorseg .door{transform:none!important;transition:none}
-.seg.between{background:var(--yellow);display:flex;flex-direction:column;gap:10px;padding:12px 14px 0;border-left:4px solid var(--seal);border-right:4px solid var(--seal)}
+.seg.between{background:var(--yellow);display:flex;flex-direction:column;gap:10px;padding:58px 14px 0;border-left:4px solid var(--seal);border-right:4px solid var(--seal)}
 .bwins4{flex:1;min-height:0;display:flex;gap:14px}
 .seg.between.dd{gap:6px}
 .seg.between.dd .bwin{max-height:none}
@@ -256,13 +256,25 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 @keyframes swing{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
 @keyframes bob{50%{transform:translateY(-1.5px)}}
 .bwins4 .bwin{flex:1}
+.passsign{position:absolute;left:18px;right:18px;top:18px;z-index:20;background:var(--display);color:#ffffff;border-radius:6px;padding:7px 12px;box-shadow:inset 0 0 0 3px var(--frame),0 4px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:2px;opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s;pointer-events:none}
+.passsign.on{opacity:1;transform:none}
+.passsign .ps1{display:flex;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden}
+.passsign .ps1 span{color:#ffc917;font-weight:700;font-size:.85rem}
+.passsign .ps1 b{font-size:1.05rem;overflow:hidden;text-overflow:ellipsis}
+.passsign .ps2{font-size:.78rem;color:#c8d4ef}
 .bdest{display:flex;align-items:baseline;gap:10px;background:var(--display);color:var(--disp-ink);border-radius:6px;padding:6px 10px;box-shadow:inset 0 0 0 3px var(--frame);font-size:.85rem;white-space:nowrap;overflow:hidden}
 .bdest span{color:var(--disp-hi);font-weight:700}
 .bdest b{font-weight:700;font-size:1rem;overflow:hidden;text-overflow:ellipsis}
 .bwin{position:relative;border-radius:10px;background:var(--frame);padding:4px;max-height:220px}
-.bwin i{position:absolute;inset:4px;border-radius:7px;overflow:hidden;background:linear-gradient(180deg,#3b4a66,#1d2638)}
-.bwin i::before{content:"";position:absolute;left:14%;right:14%;bottom:0;height:46%;background:radial-gradient(ellipse at 30% 0,#2a3550 0 30%,transparent 31%),radial-gradient(ellipse at 72% 0,#2a3550 0 26%,transparent 27%);opacity:.85}
-.bwin i::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.22) 0 16%,transparent 16% 30%,rgba(255,255,255,.1) 30% 36%,transparent 36%)}
+.bwin i{position:absolute;inset:4px;border-radius:7px;overflow:hidden;background:linear-gradient(180deg,#e9e6dc 0,#d6d2c6 62%,#9b968a 62%,#8a857a)}
+.bwin .far-win{position:absolute;left:10%;right:10%;top:9%;height:44%;border-radius:6px;box-shadow:0 0 0 3px #6b6f78}
+.bwin .far-win .extra{height:60%;max-height:34px;bottom:0}
+.bwin .seat{position:absolute;bottom:0;width:30%;height:44%;border-radius:10px 10px 2px 2px;background:linear-gradient(180deg,#3d6fc4,#2a4f96);box-shadow:inset 0 4px 0 rgba(255,255,255,.18)}
+.bwin .seat::before{content:"";position:absolute;left:18%;right:18%;top:8%;height:22%;border-radius:4px;background:rgba(255,255,255,.22)}
+.bwin .seat.a{left:6%}.bwin .seat.b{right:6%}
+.bwin .seat.first{background:linear-gradient(180deg,#a3324f,#7a2038)}
+.bwin i::before{display:none;content:"";position:absolute;left:14%;right:14%;bottom:0;height:46%;background:radial-gradient(ellipse at 30% 0,#2a3550 0 30%,transparent 31%),radial-gradient(ellipse at 72% 0,#2a3550 0 26%,transparent 27%);opacity:.85}
+.bwin i::after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(115deg,rgba(255,255,255,.22) 0 16%,transparent 16% 30%,rgba(255,255,255,.1) 30% 36%,transparent 36%)}
 .bmarks{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bclass{display:inline-grid;place-items:center;min-width:44px;height:44px;padding:0 8px;border-radius:6px;background:#ffffff;color:#003082;font-family:var(--f-display);font-weight:800;font-size:1.7rem;box-shadow:0 0 0 2px #003082}
 .bclass.first{background:#003082;color:#ffc917;box-shadow:0 0 0 2px #ffc917}
@@ -344,6 +356,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
         <div class="door r"><span class="knob"></span></div>
       </div>
       <div class="strip" id="strip" aria-hidden="true" hidden></div>
+      <div class="passsign" id="passsign" aria-live="polite"></div>
       <div class="walker" id="walker" aria-hidden="true" hidden><svg viewBox="0 0 22 40" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="5" r="4" fill="#ffd9b3" stroke="#1d1d1d" stroke-width="1.2"/>
         <path d="M7 3.5c1-3 7-3 8 0" stroke="#5a3a1a" stroke-width="2.2"/>
@@ -850,6 +863,7 @@ function bindDrag(el){
 }
 async function fling(el,dir){
   if(!el) return;
+  $("deck").querySelectorAll(".card.back1,.card.back2").forEach(x=>x.remove());
   el.style.transition="transform .32s ease-in";
   const st=el.querySelector(dir>0?".stamp.yes":".stamp.no"); if(st) st.style.opacity=1;
   el.style.transform=el.classList.contains("tf")?`translate(0,${dir*(el.offsetHeight+80)}px)`:`translate(${dir*(el.offsetWidth+120)}px,-24px) rotate(${dir*24}deg)`;
@@ -875,6 +889,14 @@ let passCount=0;
 const DOOR_SEG='<div class="door l"><span class="knob"></span></div><div class="door r"><span class="knob"></span></div>';
 const QUIET_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>';
 const BIKE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8"/></svg>';
+let stripInfo={};
+function winHTML(first){
+  const d=-(Math.random()*15).toFixed(2);
+  return `<div class="bwin"><i>
+    <span class="view far-win"><span class="l far"></span><span class="l trees"></span><span class="l extra" style="animation-delay:${d}s"></span><span class="l poles"></span></span>
+    <span class="seat a${first?" first":""}"></span><span class="seat b${first?" first":""}"></span>
+  </i></div>`;
+}
 function buildStrip(W,opt={}){
   passCount++;
   const h=hash(String(passCount)+trip.stops.join());
@@ -884,8 +906,7 @@ function buildStrip(W,opt={}){
   $("strip").innerHTML=
     `<div class="seg doorseg" style="width:${W}px">${DOOR_SEG}</div>`+
     `<div class="seg between${opt.dd?" dd":""}" style="width:${winW}px">
-       <div class="bdest"><span>${esc(name)}</span><b>${esc(dest)}</b></div>
-       ${opt.dd?`<div class="bwins4 top">${'<div class="bwin"><i></i></div>'.repeat(4)}</div><div class="bfloor"><span>Bovendek</span></div><div class="bwins4 bot">${'<div class="bwin"><i></i></div>'.repeat(4)}</div><div class="bfloor low"><span>Benedendek</span></div>`:`<div class="bwins4">${'<div class="bwin"><i></i></div>'.repeat(4)}</div>`}
+       ${opt.dd?`<div class="bwins4 top">${winHTML(first).repeat(4)}</div><div class="bfloor"><span>Bovendek</span></div><div class="bwins4 bot">${winHTML(first).repeat(4)}</div><div class="bfloor low"><span>Benedendek</span></div>`:`<div class="bwins4">${winHTML(first).repeat(4)}</div>`}
        <div class="bmarks">
          <span class="bclass${first?" first":""}">${first?"1":"2"}</span><span class="blabel">${first?"1e klas":"2e klas"}</span>
          ${quiet?`<span class="bpill">${QUIET_SVG}Stiltecoupé</span>`:""}
@@ -894,6 +915,7 @@ function buildStrip(W,opt={}){
        <div class="bstripe"></div>
      </div>`+
     `<div class="seg doorseg" style="width:${W}px">${DOOR_SEG}</div>`;
+  stripInfo={name,dest,first,quiet,bike};
   return W+winW;
 }
 // Deuren dicht -> (bij "pass") een stuk trein met ramen schuift voorbij tot de volgende deur -> die deur gaat open met de nieuwe inhoud.
@@ -906,7 +928,10 @@ async function transit(kind,opt={}){
     const strip=$("strip"), W=$("deck").getBoundingClientRect().width;
     const dist=buildStrip(W,opt);
     strip.hidden=false;
-    const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?3400:2400;
+    const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?3600:3000;
+    const ps=$("passsign"), si=stripInfo;
+    ps.innerHTML=`<div class="ps1"><span>${esc(si.name)}</span><b>${esc(si.dest)}</b></div><div class="ps2">${si.first?"1e klas":"2e klas"}${si.quiet?" · stiltecoupé":""}${si.bike?" · fietsen":""}${opt.dd?" · dubbeldekker":""}</div>`;
+    ps.classList.add("on");
     const extra=[];
     if(opt.dd){
       // Poppetje loopt binnen in de trein mee: alleen zichtbaar door de ramen, met de trap op of af.
@@ -938,7 +963,7 @@ async function transit(kind,opt={}){
     try{ await anim.finished }catch{}
     extra.forEach(a=>a.cancel());
     document.body.classList.remove("moving-force");
-    strip.hidden=true; anim.cancel();
+    strip.hidden=true; anim.cancel(); ps.classList.remove("on");
     await sleep(250);
   } else {
     renderDeck(true); await sleep(500);
