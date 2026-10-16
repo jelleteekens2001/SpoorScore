@@ -109,6 +109,8 @@ body.moving .view .l{animation-play-state:running}
 .card.board .spoor small{font-size:.58rem;font-weight:700;letter-spacing:.04em}
 .card.board .spoor b{font-size:1.15rem;font-weight:800}
 .card.board .cbody{justify-content:flex-start;padding:16px 16px 10px}
+.card.board .bwhere{flex:1;min-width:0;color:#dfe6f6;font-size:.88rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.board .bwhere b{color:#ffffff;font-weight:700}
 .card.board .bvia{margin:0;font-size:.82rem;color:#c8d4ef}
 .card.board .bvia b{color:#ffffff}
 .card.board .big{color:#ffffff}
@@ -719,8 +721,9 @@ function boardTime(c){
   return fmtTime(new Date(Date.now()+d/SPEED*60000));
 }
 function cardHTML(c,cls){
-  const head=(kind)=>`<div class="band"><span class="btime">${boardTime(c)}</span><span class="kind">${kind}</span><span class="spoor"><small>SPOOR</small><b>${spoorOf(c)}</b></span></div>`;
-  const via=`<p class="bvia">Bij <b>${esc(whereLabel(c.k))}</b></p>`;
+  const wl=whereLabel(c.k).split(" · ");
+  const head=()=>`<div class="band"><span class="btime">${boardTime(c)}</span><span class="bwhere">Bij <b>${esc(wl[0])}</b>${wl[1]?` · ${esc(wl[1])}`:""}</span><span class="spoor"><small>SPOOR</small><b>${spoorOf(c)}</b></span></div>`;
+  const via="";
   if(c.type==="fact") return `<div class="card board ${cls}" data-id="${esc(c.id)}">
     ${head(c.ai?"Stelling van Claude":"Waar of niet waar?")}
     <div class="cbody">${via}<p class="big${longCls(c.text)}">${esc(c.text)}</p></div>
