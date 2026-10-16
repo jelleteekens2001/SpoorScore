@@ -177,14 +177,16 @@ body.moving .wheel{animation-play-state:running}
 
 /* tussenstuk zonder deuren dat voorbij rijdt */
 .stage{overflow:hidden}
-.between{position:absolute;inset:0;z-index:12;transform:translateX(104%);background:linear-gradient(90deg,var(--yellow-dark),var(--yellow) 6%,var(--yellow) 94%,var(--yellow-dark));
-  border-left:4px solid var(--seal);border-right:4px solid var(--seal);display:flex;flex-direction:column;gap:10px;padding:12px 12px 0}
-.stage.pass-in .between{transition:transform .85s cubic-bezier(.55,0,.8,.3);transform:translateX(0)}
-.stage.pass-out .between{transition:transform .85s cubic-bezier(.2,.7,.45,1);transform:translateX(-104%)}
+.strip{position:absolute;top:8px;bottom:8px;left:8px;z-index:12;display:flex;will-change:transform;border-radius:8px;overflow:hidden}
+.seg{position:relative;flex:none;height:100%}
+.seg.doorseg{background:var(--frame)}
+.seg.doorseg .door{transform:none!important;transition:none}
+.seg.between{background:var(--yellow);display:flex;flex-direction:column;gap:10px;padding:12px 14px 0;border-left:4px solid var(--seal);border-right:4px solid var(--seal)}
+.bwins4{flex:1;min-height:0;display:flex;gap:14px}
+.bwins4 .bwin{flex:1}
 .bdest{display:flex;align-items:baseline;gap:10px;background:var(--display);color:var(--disp-ink);border-radius:6px;padding:6px 10px;box-shadow:inset 0 0 0 3px var(--frame);font-size:.85rem;white-space:nowrap;overflow:hidden}
 .bdest span{color:var(--disp-hi);font-weight:700}
 .bdest b{font-weight:700;font-size:1rem;overflow:hidden;text-overflow:ellipsis}
-.bwins{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .bwin{position:relative;border-radius:10px;background:var(--frame);padding:4px;max-height:220px}
 .bwin i{position:absolute;inset:4px;border-radius:7px;overflow:hidden;background:linear-gradient(180deg,#3b4a66,#1d2638)}
 .bwin i::before{content:"";position:absolute;left:14%;right:14%;bottom:0;height:46%;background:radial-gradient(ellipse at 30% 0,#2a3550 0 30%,transparent 31%),radial-gradient(ellipse at 72% 0,#2a3550 0 26%,transparent 27%);opacity:.85}
@@ -195,7 +197,7 @@ body.moving .wheel{animation-play-state:running}
 .blabel{font-weight:700;color:#003082}
 .bpill{display:inline-flex;align-items:center;gap:6px;background:#ffffff;color:#003082;border-radius:99px;padding:4px 10px 4px 6px;font-weight:700;font-size:.85rem;box-shadow:0 0 0 2px #003082}
 .bpill svg{width:20px;height:20px}
-.bstripe{margin:0 -12px;height:12px;background:#003082;box-shadow:inset 0 -4px 0 #0063d3}
+.bstripe{margin:0 -14px;height:12px;background:#003082;box-shadow:inset 0 -4px 0 #0063d3}
 body.moving-force .view .l,body.moving-force .wheel{animation-play-state:running}
 
 /* ---- menu ---- */
@@ -273,16 +275,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
         <div class="door r"><span class="knob"></span></div>
         <div class="sigtext">DEUREN SLUITEN</div>
       </div>
-      <div class="between" aria-hidden="true">
-        <div class="bdest"><span id="bTrain">Intercity</span><b id="bDest">Eindhoven Centraal</b></div>
-        <div class="bwins"><div class="bwin"><i></i></div><div class="bwin"><i></i></div></div>
-        <div class="bmarks">
-          <span class="bclass" id="bClass">2</span><span class="blabel" id="bClassLbl">2e klas</span>
-          <span class="bpill" id="bQuiet" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>Stiltecoupé</span>
-          <span class="bpill" id="bBike" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8"/></svg>Fietsen</span>
-        </div>
-        <div class="bstripe"></div>
-      </div>
+      <div class="strip" id="strip" aria-hidden="true" hidden></div>
     </section>
 
     <div class="controls">
@@ -770,49 +763,71 @@ async function fling(el,dir){
 async function decide(dir){
   if(busy) return;
   const el=$("deck").querySelector(".card.top");
-  if(pending){ const wasQuiz=pending.c.type==="tf"; busy=true; await fling(el,dir); busy=false; return proceed(wasQuiz?"pass":"doors"); }
+  if(pending){ busy=true; await fling(el,dir); busy=false; return proceed("doors"); }
   const c=currentCards[0]; if(!c||!el) return;
   busy=true;
   await fling(el,dir);
   seen.add(c.id); store.set("sq2-seen",[...seen]);
   const ok=(dir>0)===c.correct; results[c.id]=ok; store.set("sq2-res",results);
-  $("led").innerHTML = `<span class="${ok?"ok":"bad"}"><b>${ok?"Goed!":"Helaas."}</b></span> Swipe of tik op "Volgende" als je klaar bent met lezen.`;
+  $("led").innerHTML = `Jij zegt <b>${dir>0?(c.type==="tf"?"klopt":"waar"):(c.type==="tf"?"klopt niet":"niet waar")}</b>. Het antwoord staat achter de volgende deur…`;
   pending={c,ok,dir};
+  await transit("pass");
   updateScore();
+  $("led").innerHTML = `<span class="${ok?"ok":"bad"}"><b>${ok?"Goed!":"Helaas."}</b></span> Swipe of tik op "Volgende kaart" als je klaar bent met lezen.`;
   busy=false;
-  renderDeck(true);
 }
 let passCount=0;
-function dressBetween(){
+const DOOR_SEG='<div class="door l"><span class="knob"></span></div><div class="door r"><span class="knob"></span></div>';
+const QUIET_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>';
+const BIKE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8"/></svg>';
+function buildStrip(W){
   passCount++;
   const h=hash(String(passCount)+trip.stops.join());
-  const first=h%10<3;
-  $("bClass").textContent=first?"1":"2"; $("bClass").classList.toggle("first",first);
-  $("bClassLbl").textContent=first?"1e klas":"2e klas";
-  $("bQuiet").hidden=!(h%10>=6);
-  $("bBike").hidden=!(!first && h%7===0);
-  $("bTrain").textContent=trip.line.id==="live"?trip.line.n:"Intercity";
-  $("bDest").textContent=S[trip.stops.at(-1)].n;
+  const first=h%10<3, quiet=h%10>=6, bike=!first&&h%7===0;
+  const name=trip.line.id==="live"?trip.line.n:"Intercity", dest=S[trip.stops.at(-1)].n;
+  const winW=Math.round(W*2.4);
+  $("strip").innerHTML=
+    `<div class="seg doorseg" style="width:${W}px">${DOOR_SEG}</div>`+
+    `<div class="seg between" style="width:${winW}px">
+       <div class="bdest"><span>${esc(name)}</span><b>${esc(dest)}</b></div>
+       <div class="bwins4">${'<div class="bwin"><i></i></div>'.repeat(4)}</div>
+       <div class="bmarks">
+         <span class="bclass${first?" first":""}">${first?"1":"2"}</span><span class="blabel">${first?"1e klas":"2e klas"}</span>
+         ${quiet?`<span class="bpill">${QUIET_SVG}Stiltecoupé</span>`:""}
+         ${bike?`<span class="bpill">${BIKE_SVG}Fietsen</span>`:""}
+       </div>
+       <div class="bstripe"></div>
+     </div>`+
+    `<div class="seg doorseg" style="width:${W}px">${DOOR_SEG}</div>`;
+  return W+winW;
 }
-async function proceed(kind){
-  if(busy) return;
-  busy=true; pending=null;
+// Deuren dicht -> (bij "pass") een stuk trein met ramen schuift voorbij tot de volgende deur -> die deur gaat open met de nieuwe inhoud.
+async function transit(kind){
   const st=$("stage");
-  if(reduced){ renderDeck(true); busy=false; return; }
+  if(reduced){ renderDeck(true); return; }
   st.classList.add("closed"); chime();
   await sleep(850);
   if(kind==="pass"){
-    dressBetween(); document.body.classList.add("moving-force");
-    st.classList.add("pass-in"); await sleep(870);
-    renderDeck(true); await sleep(650);
-    st.classList.replace("pass-in","pass-out"); await sleep(870);
-    st.classList.remove("pass-out"); document.body.classList.remove("moving-force");
+    const strip=$("strip"), W=$("deck").getBoundingClientRect().width;
+    const dist=buildStrip(W);
+    strip.hidden=false;
+    renderDeck(true);
+    document.body.classList.add("moving-force");
+    const anim=strip.animate([{transform:"translateX(0)"},{transform:`translateX(${-dist}px)`}],{duration:2400,easing:"cubic-bezier(.45,0,.35,1)",fill:"forwards"});
+    try{ await anim.finished }catch{}
+    document.body.classList.remove("moving-force");
+    strip.hidden=true; anim.cancel();
     await sleep(250);
   } else {
     renderDeck(true); await sleep(500);
   }
   st.classList.remove("closed");
   await sleep(780);
+}
+async function proceed(kind){
+  if(busy) return;
+  busy=true; pending=null;
+  await transit(kind);
   busy=false;
 }
 $("btnNo").onclick=()=>decide(-1);
