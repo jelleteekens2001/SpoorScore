@@ -138,12 +138,12 @@ body.moving .view .l{animation-play-state:running}
 .card.board .cfoot.info .rd b{font-weight:700}
 .card.board .cfoot.info .late{color:#db0029;font-weight:800}
 .card.board .stamp{background:#ffffff;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.05rem}
-.tfopts{margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tfopts{margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tfopt{border:0;font:inherit;font-weight:800;font-size:1.05rem;cursor:pointer;border-radius:6px;padding:12px 10px;background:#ffffff;color:#003082;box-shadow:0 2px 0 rgba(0,0,0,.25);transition:transform .1s}
 .tfopt.yes{background:#ffc917}
 .tfopt:active{transform:translateY(1px) scale(.99)}
 .tfopt:focus-visible{outline:3px solid #ffc917;outline-offset:2px}
-.deckopts{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.deckopts{margin-top:6px;display:flex;flex-direction:column;gap:8px}
 .deckopt{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;border:0;font:inherit;cursor:pointer;background:#ffffff;color:#003082;border-radius:6px;padding:10px 12px;min-width:0;box-shadow:0 2px 0 rgba(0,0,0,.25);transition:transform .1s}
 .deckopt:active{transform:translateY(1px) scale(.99)}
 .deckopt:focus-visible{outline:3px solid #ffc917;outline-offset:2px}
@@ -1006,15 +1006,25 @@ function nextInfo(){
   if(nl) return {name:nl.name,t:nl.arr,delay:nl.delayMin||0};
   return {name:S[trip.stops[n]].n,t:Date.now()+((trip.cum[n]-c)+Math.max(0,-pos))/SPEED*60000,delay:0};
 }
+function destArrival(){
+  const dest=S[trip.stops.at(-1)].n, lv=liveStops().find(x=>norm(x.name)===norm(dest));
+  if(lv&&!isNaN(lv.arr)) return {t:lv.arr,delay:lv.delayMin||0};
+  const total=trip.cum.at(-1), c=Math.max(0,Math.min(total,pos));
+  return {t:Date.now()+((total-c)+Math.max(0,-pos))/SPEED*60000,delay:0};
+}
+function destLine(dest){
+  const a=destArrival();
+  return `<span class="rd">Richting <b>${esc(dest)}</b> · aankomst ${fmtTime(new Date(a.t))}${a.delay>0?` <span class="late">+${a.delay}</span>`:""}</span>`;
+}
 function infoInner(){
   const i=nextInfo(), dest=S[trip.stops.at(-1)].n;
   if(stopped&&pos>=0){
     const c=Math.max(0,Math.min(trip.cum.at(-1),pos)), here=S[trip.stops[nearestIdx(c)]].n;
     const lv=liveStops().find(x=>norm(x.name)===norm(here));
     const dep=lv&&!isNaN(lv.dep)?` · vertrek ${fmtTime(new Date(lv.dep))}${lv.delayMin>0?` <span class="late">+${lv.delayMin}</span>`:""}`:"";
-    return `<span class="nx">Nu op station <b>${esc(here)}</b>${dep}</span><span class="rd">Deze trein rijdt richting <b>${esc(dest)}</b></span>`;
+    return `<span class="nx">Nu op station <b>${esc(here)}</b>${dep}</span>${destLine(dest)}`;
   }
-  return `<span class="nx">Volgende halte <b>${esc(i.name)}</b> ${fmtTime(new Date(i.t))}${i.delay>0?` <span class="late">+${i.delay}</span>`:""}</span><span class="rd">Deze trein rijdt richting <b>${esc(dest)}</b></span>`;
+  return `<span class="nx">Volgende halte <b>${esc(i.name)}</b> ${fmtTime(new Date(i.t))}${i.delay>0?` <span class="late">+${i.delay}</span>`:""}</span>${destLine(dest)}`;
 }
 function refreshInfo(){ document.querySelectorAll(".cfoot.info").forEach(el=>{el.innerHTML=infoInner()}); }
 function nextName(){ const c=Math.max(0,Math.min(trip.cum.at(-1),pos)); let n=trip.cum.findIndex(x=>x>c+.3); if(n<0)n=trip.stops.length-1; return S[trip.stops[n]].n; }
