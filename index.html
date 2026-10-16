@@ -206,8 +206,8 @@ body.moving .view .l{animation-play-state:running}
 .door::after{content:"";position:absolute;left:0;right:0;bottom:12%;height:12px;background:#003082;box-shadow:0 16px 0 -5px #0063d3}
 .door .knob{position:absolute;top:60%;width:30px;height:30px;border-radius:50%;background:#ffffff;box-shadow:inset 0 0 0 5px #008a3e,0 0 0 2px #003082}
 .door.l .knob{right:14px}.door.r .knob{left:14px}
-.v-ok .knob,.door.v-ok .knob{background:#3ddc7a;box-shadow:inset 0 0 0 5px #0b7a3a,0 0 0 2px #003082,0 0 14px 3px rgba(61,220,122,.75)}
-.v-bad .knob,.door.v-bad .knob{background:#ff4d5e;box-shadow:inset 0 0 0 5px #a3001a,0 0 0 2px #003082,0 0 14px 3px rgba(255,77,94,.75)}
+.v-ok .knob,.door.v-ok .knob{box-shadow:inset 0 0 0 5px #008a3e,0 0 0 2px #003082}
+.v-bad .knob,.door.v-bad .knob{box-shadow:inset 0 0 0 5px #db0029,0 0 0 2px #003082}
 .stage.closed .door{transform:none}
 .controls{flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px calc(4px + env(safe-area-inset-bottom,0px));background:var(--plat);border-top:5px dotted var(--plat-edge);border-radius:0 0 12px 12px}
 .round{width:54px;height:54px;border-radius:50%;border:0;display:grid;place-items:center;transition:transform .12s}
