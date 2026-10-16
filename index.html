@@ -740,13 +740,13 @@ function cardHTML(c,cls){
   const wl=whereLabel(c.k).split(" · ");
   const head=()=>`<div class="band"><span class="btime">${boardTime(c)}</span><span class="bwhere">Bij <b>${esc(wl[0])}</b>${wl[1]?` · ${esc(wl[1])}`:""}</span><span class="spoor"><small>SPOOR</small><b>${spoorOf(c)}</b></span></div>`;
   const via="";
-  if(c.type==="fact") return `<div class="card board ${cls}" data-id="${esc(c.id)}">
+  if(c.type==="fact") return `<div class="card board ${cls}" data-id="${esc(c.id)}" data-k="${esc(c.k)}">
     ${head(c.ai?"Stelling van Claude":"Waar of niet waar?")}
     <div class="cbody">${via}<p class="big${longCls(c.text)}">${esc(c.text)}</p>
       <div class="tfopts"><button type="button" class="tfopt no" data-act="false">✕ Niet waar</button><button type="button" class="tfopt yes" data-act="true">✓ Waar</button></div></div>
     <div class="cfoot info">${infoInner()}</div>
     <span class="stamp yes">Waar</span><span class="stamp no">Niet waar</span></div>`;
-  return `<div class="card board tf ${cls}" data-id="${esc(c.id)}">
+  return `<div class="card board tf ${cls}" data-id="${esc(c.id)}" data-k="${esc(c.k)}">
     ${head(c.ai?"Claude vraagt":"Vraag")}
     <div class="cbody">${via}<p class="big${longCls(c.q)}">${esc(c.q)}</p>
       <div class="deckopts"><button type="button" class="deckopt up" data-act="up"><small>↑ Bovendek</small><b>${esc(c.left)}</b></button>
@@ -1022,7 +1022,16 @@ function infoInner(){
   }
   return `<span class="nx">Volgende halte <b>${esc(i.name)}</b> ${fmtTime(new Date(i.t))}${i.delay>0?` <span class="late">+${i.delay}</span>`:""}</span>${destLine(dest)}`;
 }
-function refreshInfo(){ document.querySelectorAll(".cfoot.info").forEach(el=>{el.innerHTML=infoInner()}); }
+function refreshInfo(){
+  document.querySelectorAll(".cfoot.info").forEach(el=>{el.innerHTML=infoInner()});
+  // ook de kop van het bord bijwerken: tijd en "Bij … · over … km"
+  document.querySelectorAll(".card.board[data-k]").forEach(card=>{
+    const k=card.dataset.k; if(!S[k]||trip.stops.indexOf(k)<0) return;
+    const wl=whereLabel(k).split(" · "), bw=card.querySelector(".bwhere"), bt=card.querySelector(".btime");
+    if(bw) bw.innerHTML=`Bij <b>${esc(wl[0])}</b>${wl[1]?` · ${esc(wl[1])}`:""}`;
+    if(bt) bt.textContent=boardTime({k});
+  });
+}
 function nextName(){ const c=Math.max(0,Math.min(trip.cum.at(-1),pos)); let n=trip.cum.findIndex(x=>x>c+.3); if(n<0)n=trip.stops.length-1; return S[trip.stops[n]].n; }
 function render(){
   const P=computePos(), total=trip.cum.at(-1); pos=P.km;
@@ -1161,6 +1170,8 @@ $("aiBtn").onclick=()=>{closeSheet(); askClaude();};
     $("liveHint").textContent="Bezig met zoeken naar je trein…"; maybeDetect(true); };
   setInterval(render,15000);
   setInterval(()=>{ if(document.visibilityState==="visible") fetchLive(); },60000);
+  // terug in de app (scherm weer aan): meteen bijwerken in plaats van wachten op de volgende ronde
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ render(); fetchLive(); } });
 })();
 </script>
 
