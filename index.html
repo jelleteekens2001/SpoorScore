@@ -246,6 +246,8 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .bfloor{position:relative;height:6px;margin:0 -14px;background:#c99a00}
 .bfloor span{position:absolute;right:16px;top:-15px;font-size:.62rem;font-weight:800;color:#003082;text-transform:uppercase;letter-spacing:.06em}
 .bfloor.low{display:none}
+.rowcls{flex:none;align-self:center;display:grid;place-items:center;width:30px;height:30px;border-radius:5px;background:#ffffff;color:#003082;font-weight:800;font-size:1.1rem;box-shadow:0 0 0 2px #003082}
+.rowcls.first{background:#003082;color:#ffc917;box-shadow:0 0 0 2px #ffc917}
 .walker{display:none!important}
 .inside{position:absolute;inset:0;pointer-events:none;z-index:2}
 .inside::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.16) 0 30%,transparent 30% 60%,rgba(255,255,255,.08) 60%)}
@@ -906,9 +908,9 @@ function buildStrip(W,opt={}){
   $("strip").innerHTML=
     `<div class="seg doorseg" style="width:${W}px">${DOOR_SEG}</div>`+
     `<div class="seg between${opt.dd?" dd":""}" style="width:${winW}px">
-       ${opt.dd?`<div class="bwins4 top">${winHTML(first).repeat(4)}</div><div class="bfloor"><span>Bovendek</span></div><div class="bwins4 bot">${winHTML(first).repeat(4)}</div><div class="bfloor low"><span>Benedendek</span></div>`:`<div class="bwins4">${winHTML(first).repeat(4)}</div>`}
+       ${opt.dd?`<div class="bwins4 top"><span class="rowcls${first?" first":""}">${first?1:2}</span>${Array.from({length:4},()=>winHTML(first)).join("")}</div><div class="bfloor"></div><div class="bwins4 bot"><span class="rowcls${!first?" first":""}">${!first?1:2}</span>${Array.from({length:4},()=>winHTML(!first)).join("")}</div>`:`<div class="bwins4">${Array.from({length:4},()=>winHTML(first)).join("")}</div>`}
        <div class="bmarks">
-         <span class="bclass${first?" first":""}">${first?"1":"2"}</span><span class="blabel">${first?"1e klas":"2e klas"}</span>
+         ${opt.dd?"":`<span class="bclass${first?" first":""}">${first?"1":"2"}</span><span class="blabel">${first?"1e klas":"2e klas"}</span>`}
          ${quiet?`<span class="bpill">${QUIET_SVG}Stiltecoupé</span>`:""}
          ${bike?`<span class="bpill">${BIKE_SVG}Fietsen</span>`:""}
        </div>
@@ -930,7 +932,7 @@ async function transit(kind,opt={}){
     strip.hidden=false;
     const EASE="cubic-bezier(.45,0,.35,1)", DUR=opt.dd?3600:3000;
     const ps=$("passsign"), si=stripInfo;
-    ps.innerHTML=`<div class="ps1"><span>${esc(si.name)}</span><b>${esc(si.dest)}</b></div><div class="ps2">${si.first?"1e klas":"2e klas"}${si.quiet?" · stiltecoupé":""}${si.bike?" · fietsen":""}${opt.dd?" · dubbeldekker":""}</div>`;
+    ps.innerHTML=`<div class="ps1"><span>${esc(si.name)}</span><b>${esc(si.dest)}</b></div>`;
     ps.classList.add("on");
     const extra=[];
     if(opt.dd){
@@ -941,10 +943,11 @@ async function transit(kind,opt={}){
       const upFeet=top.bottom-sr.top-6, downFeet=bot.bottom-sr.top-6, midFeet=(upFeet+downFeet)/2;
       // stoelrug is 44% van de raamhoogte; een staand persoon is ruim 1,6x zo hoog
       const winH=wins.length?wins[0].h:top.height;
-      const hgt=Math.max(30,winH*.74), wdt=hgt*.55;
+      const hgt=Math.max(30,winH*.8), wdt=hgt*.55;
       const inside=document.createElement("div");
       inside.className="inside";
-      inside.style.clipPath=`path('${wins.map(r=>`M${r.x.toFixed(1)} ${r.y.toFixed(1)}h${r.w.toFixed(1)}v${r.h.toFixed(1)}h${(-r.w).toFixed(1)}Z`).join(" ")}')`;
+      // alleen het deel van het raam boven de rugleuningen (stoelen zijn 44% hoog): het poppetje loopt achter de stoelen langs
+      inside.style.clipPath=`path('${wins.map(r=>{const vh=r.h*.6;return `M${r.x.toFixed(1)} ${r.y.toFixed(1)}h${r.w.toFixed(1)}v${vh.toFixed(1)}h${(-r.w).toFixed(1)}Z`}).join(" ")}')`;
       const man=document.createElement("div");
       man.className="man"; man.style.width=wdt+"px"; man.style.height=hgt+"px";
       man.innerHTML=$("walker").innerHTML;
