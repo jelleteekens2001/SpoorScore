@@ -12,6 +12,7 @@
 //   /stations?q=eind             stations zoeken op naam
 //   /trips?lat=52.09&lng=5.11&to=EHV   vertrekkende treinen vanaf het dichtstbijzijnde station naar een bestemming
 //   /trips?from=UT&to=EHV        idem, met een vast vertrekstation
+//   &recent=1                    treinen die net vertrokken zijn (om te vinden in welke trein je al zit)
 // Ruw NS-antwoord bekijken bij /journey:  ...&raw=1
 
 const ALLOWED_ORIGINS = [
@@ -176,7 +177,9 @@ export default {
           from = best.code; fromName = best.name;
         } else fromName = list.find((s) => s.code === from)?.name || from;
         const toName = list.find((s) => s.code === to)?.name || to;
-        const res = await fetch(`${RI}/v3/trips?fromStation=${from}&toStation=${to}`, { headers: { "Ocp-Apim-Subscription-Key": env.NS_KEY }, cf: { cacheTtl: 30, cacheEverything: true } });
+        const recent = url.searchParams.has("recent");
+        const when = recent ? `&dateTime=${encodeURIComponent(new Date(Date.now() - 35 * 60000).toISOString())}` : "";
+        const res = await fetch(`${RI}/v3/trips?fromStation=${from}&toStation=${to}${when}`, { headers: { "Ocp-Apim-Subscription-Key": env.NS_KEY }, cf: { cacheTtl: 30, cacheEverything: true } });
         if (!res.ok) return json({ error: `NS gaf status ${res.status} bij het zoeken van reizen.` }, 502);
         const d = await res.json();
         if (url.searchParams.has("raw")) return json(d);
@@ -196,7 +199,10 @@ export default {
             transfers: t.transfers ?? Math.max(0, L.length - 1),
             cancelled: !!f.cancelled || t.status === "CANCELLED",
           };
-        }).filter((t) => t.train && t.dep && Date.parse(t.dep) > now - 2 * 60000).slice(0, 6);
+        }).filter((t) => t.train && t.dep && (recent
+            ? Date.parse(t.dep) > now - 40 * 60000 && Date.parse(t.dep) < now + 10 * 60000
+            : Date.parse(t.dep) > now - 2 * 60000))
+          .slice(0, 6);
         return json({ from: { code: from, name: fromName }, to: { code: to, name: toName }, trips });
       } catch (e) { return json({ error: "Reizen zoeken lukt niet: " + e.message }, 502); }
     }

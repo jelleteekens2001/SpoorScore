@@ -206,6 +206,8 @@ body.moving .view .l{animation-play-state:running}
 .door::after{content:"";position:absolute;left:0;right:0;bottom:12%;height:12px;background:#003082;box-shadow:0 16px 0 -5px #0063d3}
 .door .knob{position:absolute;top:60%;width:30px;height:30px;border-radius:50%;background:#ffffff;box-shadow:inset 0 0 0 5px #008a3e,0 0 0 2px #003082}
 .door.l .knob{right:14px}.door.r .knob{left:14px}
+.v-ok .knob,.door.v-ok .knob{background:#3ddc7a;box-shadow:inset 0 0 0 5px #0b7a3a,0 0 0 2px #003082,0 0 14px 3px rgba(61,220,122,.75)}
+.v-bad .knob,.door.v-bad .knob{background:#ff4d5e;box-shadow:inset 0 0 0 5px #a3001a,0 0 0 2px #003082,0 0 14px 3px rgba(255,77,94,.75)}
 .stage.closed .door{transform:none}
 .controls{flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px calc(4px + env(safe-area-inset-bottom,0px));background:var(--plat);border-top:5px dotted var(--plat-edge);border-radius:0 0 12px 12px}
 .round{width:54px;height:54px;border-radius:50%;border:0;display:grid;place-items:center;transition:transform .12s}
@@ -305,6 +307,15 @@ body.moving-force .view .l,body.moving-force .wheel{animation-play-state:running
 .book input:focus{outline:none;border-bottom-color:#0063d3;border-bottom-width:2.5px}
 .fields{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .fld{display:grid;grid-template-columns:44px 1fr;align-items:end;gap:8px}
+.fld.one{grid-template-columns:1fr}
+.cands{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.cand{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;text-align:left;background:var(--paper-2);border:1.5px solid var(--rule);border-radius:3px;padding:10px 12px;font:inherit;color:inherit;cursor:pointer}
+.cand b{font-size:1rem}
+.replist{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.replist li{border-left:3px solid var(--rule);padding:2px 0 2px 8px;font-size:.88rem}
+.replist li small{display:block;color:var(--faint);font-size:.72rem;font-weight:700}
+.cand small{color:var(--faint);font-size:.8rem}
+.cand.best{border-width:2.5px}
 .fld span{font-family:var(--f-mono);font-size:.78rem;font-weight:700;text-transform:uppercase;padding-bottom:10px}
 .book .btn{border-radius:3px}
 .book .btn.ghost{color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--rule)}
@@ -434,18 +445,14 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
   </div>
 
   <section class="tbl">
-    <h3><span class="tno">1</span>Reis plannen</h3>
+    <h3><span class="tno">1</span>Ik zit in de trein naar</h3>
     <div class="fields">
-      <label class="fld" for="destIn"><span>Naar</span><input id="destIn" list="destList" autocomplete="off" placeholder="Bestemming, bijv. Eindhoven"></label>
-      <label class="fld" for="fromIn"><span>Van</span><input id="fromIn" list="fromList" autocomplete="off" placeholder="Dichtstbijzijnd station"></label>
-      <datalist id="destList"></datalist><datalist id="fromList"></datalist>
+      <label class="fld one" for="destIn"><input id="destIn" list="destList" autocomplete="off" placeholder="Eindbestemming, bijv. Eindhoven" aria-label="Eindbestemming van je trein"></label>
+      <datalist id="destList"></datalist>
     </div>
-    <button class="btn wide" id="tripsBtn" type="button">Toon vertrekkende treinen</button>
+    <button class="btn wide" id="tripsBtn" type="button">Vind mijn trein</button>
     <p class="hint" id="tripsHint"></p>
-    <div class="tt" id="tripsTbl" hidden>
-      <div class="tt-h"><span>Vertr.</span><span>Sp.</span><span>Trein</span><span>Aank.</span></div>
-      <div id="tripsRows"></div>
-    </div>
+    <div id="tripsRows" class="cands"></div>
   </section>
 
   <section class="tbl">
@@ -464,7 +471,18 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
   </section>
 
   <section class="tbl">
-    <h3><span class="tno">4</span>Overige</h3>
+    <h3><span class="tno">4</span>Foutje gezien?</h3>
+    <div id="repNow" hidden>
+      <p class="hint" style="margin-top:0">Laatst beantwoorde kaart: <span id="repWhat"></span></p>
+      <button class="btn ghost" id="repBtn" type="button" style="margin-top:8px">Meld deze kaart als foutief</button>
+    </div>
+    <p class="hint" id="repDone"></p>
+    <ul class="replist" id="repList"></ul>
+    <button class="btn ghost" id="repCopy" type="button" hidden>Kopieer gemelde kaarten</button>
+  </section>
+
+  <section class="tbl">
+    <h3><span class="tno">5</span>Overige</h3>
     <div class="row" style="gap:10px;flex-wrap:wrap">
       <button class="iconbtn" id="sound" type="button" aria-pressed="false">Gong uit</button>
       <button class="btn ghost" id="aiBtn" type="button" hidden>Meer kaarten van Claude</button>
@@ -856,7 +874,7 @@ function renderDeck(force){
   const list=deckList(), top=list[0];
   const topId=top?top.id:null;
   if(!force && topId===shownTop) return;
-  shownTop=topId; currentCards=list.slice(0,3);
+  shownTop=topId; currentCards=list.slice(0,3); if(top&&!lastCard) lastCard=top;
   if(!top){
     const last=S[trip.stops.at(-1)].n;
     deck.innerHTML=`<div class="card top empty"><div class="band"><span class="kind">Alles gezien</span><span class="where">${esc(S[trip.stops[Math.max(0,nearI)]].n)}</span></div>
@@ -941,9 +959,10 @@ async function decide(dir){
   await fling(el,dir);
   seen.add(c.id); store.set("sq2-seen",[...seen]);
   const ok=(dir>0)===c.correct; results[c.id]=ok; store.set("sq2-res",results);
+  lastCard=c;   // de laatst beantwoorde kaart kun je in het menu als foutief melden
   $("led").innerHTML = `Jij kiest <b>${esc(c.type==="tf"?(dir>0?c.rightOpt:c.left):(dir>0?"waar":"niet waar"))}</b>. Het antwoord staat achter de volgende deur…`;
   pending={c,ok,dir};
-  await transit("pass", c.type==="tf"?{dd:true,deck:dir>0?"down":"up"}:{});
+  await transit("pass", {...(c.type==="tf"?{dd:true,deck:dir>0?"down":"up"}:{}), verdict:ok?"ok":"bad"});
   updateScore();
   $("led").innerHTML = `<span class="${ok?"ok":"bad"}"><b>${ok?"Goed!":"Helaas."}</b></span> Swipe of tik op "Volgende kaart" als je klaar bent met lezen.`;
   busy=false;
@@ -961,6 +980,7 @@ function winHTML(first){
   </i></div>`;
 }
 function buildStrip(W,opt={}){
+  const vcls=opt.verdict?` v-${opt.verdict}`:"";
   passCount++;
   const h=hash(String(passCount)+trip.stops.join());
   const first=h%10<3, quiet=h%10>=6, bike=!first&&h%7===0;
@@ -978,7 +998,7 @@ function buildStrip(W,opt={}){
        </div>
        <div class="bstripe"></div>
      </div>`+
-    `<div class="seg doorseg" style="width:${W}px"><div class="door l"><span class="knob"></span><span class="dsign"><small>${esc(name)}</small><b>${esc(dest)}</b></span></div><div class="door r"><span class="knob"></span></div></div>`;
+    `<div class="seg doorseg" style="width:${W}px"><div class="door l${vcls}"><span class="knob"></span><span class="dsign"><small>${esc(name)}</small><b>${esc(dest)}</b></span></div><div class="door r${vcls}"><span class="knob"></span></div></div>`;
   stripInfo={name,dest,first,quiet,bike};
   $("doorSign").innerHTML=`<small>${esc(name)}</small><b>${esc(dest)}</b>`;
   return W+winW;
@@ -1004,6 +1024,7 @@ async function transit(kind,opt={}){
     try{ await anim.finished }catch{}
     extra.forEach(a=>a.cancel());
     document.body.classList.remove("moving-force");
+    if(opt.verdict) st.querySelector(".doors").classList.add(`v-${opt.verdict}`);
     strip.hidden=true; anim.cancel();
     await sleep(250);
   } else {
@@ -1011,6 +1032,7 @@ async function transit(kind,opt={}){
   }
   st.classList.remove("closed");
   await sleep(780);
+  st.querySelector(".doors").classList.remove("v-ok","v-bad");
 }
 async function proceed(kind){
   if(busy) return;
@@ -1196,7 +1218,6 @@ function suggest(inputId,listId){
   },250);
 }
 $("destIn").addEventListener("input",()=>suggest("destIn","destList"));
-$("fromIn").addEventListener("input",()=>suggest("fromIn","fromList"));
 async function codeFor(name){
   const key=name.trim().toLowerCase(); if(!key) return null;
   if(stationCodes[key]) return stationCodes[key];
@@ -1204,37 +1225,58 @@ async function codeFor(name){
   const x=(j.stations||[])[0]; if(x){ stationCodes[x.name.toLowerCase()]=x.code; return x.code; }
   return null;
 }
+// Zoek de trein waar je al in zit: treinen naar je bestemming die net vertrokken zijn van het station waar je nu bent of net langs kwam.
 async function findTrips(){
-  const hint=$("tripsHint"), tbl=$("tripsTbl"), rows=$("tripsRows");
-  if(!NS_PROXY_URL){ hint.textContent="Reizen zoeken werkt alleen op je eigen site met de NS-koppeling."; return; }
-  tbl.hidden=true;
+  const hint=$("tripsHint"), rows=$("tripsRows");
+  rows.innerHTML="";
+  if(!NS_PROXY_URL){ hint.textContent="Dit werkt alleen op je eigen site met de NS-koppeling."; return; }
+  if(!gps){ hint.textContent="Je locatie is nog niet bekend. Zet locatie aan, of vul hieronder het treinnummer in."; return; }
   try{
     hint.textContent="Zoeken…";
     const to=await codeFor($("destIn").value);
     if(!to){ hint.textContent="Bestemming niet gevonden. Kies een station uit de lijst."; return; }
-    let qs=`to=${encodeURIComponent(to)}`;
-    if($("fromIn").value.trim()){ const f=await codeFor($("fromIn").value); if(!f){hint.textContent="Vertrekstation niet gevonden.";return} qs+=`&from=${encodeURIComponent(f)}`; }
-    else if(gps) qs+=`&lat=${gps.lat.toFixed(5)}&lng=${gps.lon.toFixed(5)}`;
-    else { hint.textContent="Je locatie is niet bekend. Vul bij 'Van' je vertrekstation in."; return; }
-    const r=await fetch(`${NS_PROXY_URL}/trips?${qs}`); const j=await r.json().catch(()=>({error:"Onleesbaar antwoord"}));
+    const r=await fetch(`${NS_PROXY_URL}/trips?recent=1&to=${encodeURIComponent(to)}&lat=${gps.lat.toFixed(5)}&lng=${gps.lon.toFixed(5)}`);
+    const j=await r.json().catch(()=>({error:"Onleesbaar antwoord"}));
     if(!r.ok||j.error) throw new Error(j.error||("status "+r.status));
-    if(!j.trips?.length){ hint.textContent=`Geen treinen gevonden van ${j.from?.name||"hier"} naar ${j.to?.name||"je bestemming"}.`; return; }
-    hint.innerHTML=`Van <b>${esc(j.from.name)}</b> naar <b>${esc(j.to.name)}</b>. Tik op je trein.`;
-    const late=d=>d>0?` <span class="late">+${d}</span>`:"";
-    rows.innerHTML=j.trips.map(t=>`<button type="button" class="tt-r${t.cancelled?" cx":""}" data-nr="${esc(t.train)}">
-      <span class="t">${fmtTime(new Date(t.dep))}${late(t.depDelay)}</span>
-      <span class="sp">${esc(t.track||"–")}</span>
-      <span class="tr"><b>${esc(t.type)} ${esc(t.train)}</b><small>${t.direction?`richting ${esc(t.direction)}`:""}${t.transfers?` · ${t.transfers}× overstappen`:""}</small></span>
-      <span class="t">${t.arr?fmtTime(new Date(t.arr)):"–"}${late(t.arrDelay)}</span></button>`).join("");
-    rows.querySelectorAll(".tt-r").forEach(b=>b.onclick=()=>{ if(b.classList.contains("cx")) return; closeSheet(); chooseTrain(b.dataset.nr); });
-    tbl.hidden=false;
+    const list=(j.trips||[]).filter(t=>!t.cancelled);
+    if(!list.length){ hint.textContent=`Geen trein naar ${j.to?.name||"je bestemming"} gevonden die hier net langskwam. Probeer het treinnummer.`; return; }
+    // meest waarschijnlijk: de laatst vertrokken trein (of de eerstvolgende als er nog niets vertrok)
+    const now=Date.now(), gone=list.filter(t=>Date.parse(t.dep)<=now+60000);
+    const best=(gone.length?gone[gone.length-1]:list[0]).train;
+    hint.innerHTML=`Treinen naar <b>${esc(j.to.name)}</b> via <b>${esc(j.from.name)}</b>. In welke zit je?`;
+    rows.innerHTML=list.slice(-4).map(t=>{const d=Date.parse(t.dep)<=now;return `<button type="button" class="cand${t.train===best?" best":""}" data-nr="${esc(t.train)}"><b>${esc(t.type)} ${esc(t.train)}</b><small>${d?"vertrok":"vertrekt"} ${fmtTime(new Date(t.dep))}${t.track?` · spoor ${esc(t.track)}`:""}${t.train===best?" · waarschijnlijk":""}</small></button>`}).join("");
+    rows.querySelectorAll(".cand").forEach(b=>b.onclick=()=>{ closeSheet(); chooseTrain(b.dataset.nr); });
   }catch(e){ hint.textContent=`Zoeken lukt niet: ${e.message||"geen verbinding"}.`; }
 }
 $("tripsBtn").onclick=findTrips;
 $("destIn").addEventListener("keydown",e=>{ if(e.key==="Enter") findTrips(); });
 
+// ---------- foutieve stelling melden ----------
+let lastCard=null;
+let reported=store.get("sq2-reported",[]);   // [{id,st,t}]
+function cardText(c){ return c.type==="fact"?c.text:`${c.q} (${c.left} / ${c.rightOpt})`; }
+function renderReport(){
+  const c=lastCard;
+  $("repNow").hidden=!c;
+  if(c) $("repWhat").textContent=`"${cardText(c)}" (${S[c.k].n})`;
+  $("repList").innerHTML=reported.map(x=>`<li><small>${esc(x.st)}</small>${esc(x.t)}</li>`).join("");
+  $("repCopy").hidden=!reported.length;
+}
+$("repBtn").onclick=()=>{
+  const c=lastCard; if(!c) return;
+  if(!reported.some(x=>x.id===c.id)) reported.unshift({id:c.id,st:S[c.k].n,t:cardText(c)});
+  store.set("sq2-reported",reported); seen.add(c.id); store.set("sq2-seen",[...seen]);
+  $("repDone").textContent="Gemeld. Deze kaart komt niet meer terug.";
+  renderReport(); if(!pending) renderDeck(true);
+};
+$("repCopy").onclick=async()=>{
+  const txt=reported.map(x=>`- [${x.st}] ${x.t}`).join("\n");
+  try{ await navigator.clipboard.writeText(txt); $("repDone").textContent="Lijst gekopieerd."; }
+  catch{ $("repDone").textContent="Kopiëren lukt hier niet. Houd de lijst ingedrukt om te selecteren."; }
+};
+
 // ---------- menu ----------
-function openSheet(){ $("sheet").hidden=false; $("sheetClose").focus(); }
+function openSheet(){ $("repDone").textContent=""; renderReport(); $("sheet").hidden=false; $("sheetClose").focus(); }
 function closeSheet(){ $("sheet").hidden=true; $("menuBtn").focus(); }
 $("menuBtn").onclick=openSheet;
 $("sheetClose").onclick=closeSheet;
