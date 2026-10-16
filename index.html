@@ -145,6 +145,7 @@ body.moving .view .l{animation-play-state:running}
 .card.board .cfoot.info .rd{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem}
 .card.board .cfoot.info .rd b{font-weight:700}
 .card.board .cfoot.info .late{color:#db0029;font-weight:800}
+.bcat{display:block;color:#ffc917;font-size:.74rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:-4px}
 .card.board .stamp{background:#ffffff;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.05rem}
 .tfopts{margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tfopt{border:0;font:inherit;font-weight:800;font-size:1.05rem;cursor:pointer;border-radius:6px;padding:12px 10px;background:#ffffff;color:#003082;box-shadow:0 2px 0 rgba(0,0,0,.25);transition:transform .1s}
@@ -313,6 +314,9 @@ body.moving-force .view .l,body.moving-force .wheel{animation-play-state:running
 .cands{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .cand{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;text-align:left;background:var(--paper-2);border:1.5px solid var(--rule);border-radius:3px;padding:10px 12px;font:inherit;color:inherit;cursor:pointer}
 .cand b{font-size:1rem}
+.legend{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.legend li{display:flex;align-items:center;gap:8px;font-size:.88rem}
+.legend b{display:inline-grid;place-items:center;min-width:24px;height:22px;border:1.5px solid var(--rule);border-radius:2px;font-family:var(--f-mono);font-size:.8rem}
 .recent{list-style:none;margin:8px 0 4px;padding:0;display:flex;flex-direction:column}
 .recent li{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dotted var(--rule);font-size:.88rem;line-height:1.3}
 .recent li small{display:block;color:var(--faint);font-size:.72rem;font-weight:700}
@@ -489,7 +493,13 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
   </section>
 
   <section class="tbl">
-    <h3><span class="tno">5</span>Overige</h3>
+    <h3><span class="tno">5</span>Sporenoverzicht</h3>
+    <p class="hint" style="margin-top:0">Het spoornummer op een kaart vertelt wat voor soort vraag het is.</p>
+    <ol class="legend" id="legend"></ol>
+  </section>
+
+  <section class="tbl">
+    <h3><span class="tno">6</span>Overige</h3>
     <div class="row" style="gap:10px;flex-wrap:wrap">
       <button class="iconbtn" id="sound" type="button" aria-pressed="false">Gong uit</button>
       <button class="btn ghost" id="aiBtn" type="button" hidden>Meer kaarten van Claude</button>
@@ -816,20 +826,36 @@ function computePos(){
 }
 function nearestIdx(km){let b=0;trip.cum.forEach((c,i)=>{if(Math.abs(c-km)<Math.abs(trip.cum[b]-km))b=i});return b}
 
+// ---------- sporen = categorieën ----------
+const SPOREN={1:"Trein & station",2:"Plaatsnaam",3:"Personen",4:"Geschiedenis",5:"Stadsfeit",6:"Natuur & landschap",7:"Eten, drinken & industrie",8:"Sport & cultuur"};
+// vaste indeling per kaart (volgorde zoals in de stationsgegevens)
+const CAT_F={ehv:[7,8,5,5],bst:[7],btl:[1],vg:[4],ht:[2,3,5,5],ztb:[6,3],gdm:[6,4],cl:[3,6],htn:[5],utl:[2],ut:[1,1,5,5],mas:[4],bkl:[2],ac:[3],dvd:[1],asa:[1,2],asd:[1,3,1,5],
+  o:[7],nm:[2,8],ost:[6],tb:[7,7],gz:[5],bd:[5,4],shl:[6,4],ledn:[4,3],gvc:[5,5],dt:[4,3],sdm:[7],rtd:[7,5,4],ddr:[4,4],rm:[3],mt:[4,6]};
+const CAT_Q={ehv:[8,5],bst:[7],btl:[1],ht:[3,5,7],ztb:[6],gdm:[6,4],cl:[3],htn:[5],utl:[2],ut:[5,4],mas:[4],bkl:[2],ac:[3],dvd:[1],asa:[2],asd:[3,1],
+  o:[7],nm:[2],tb:[7],bd:[5],shl:[6],ledn:[4],gvc:[5],dt:[3],rtd:[5],ddr:[4],mt:[4]};
+// voor kaarten van Claude: indeling op trefwoorden
+function guessCat(t){
+  const R=[[1,/\b(station|spoor|trein|perron|spoorlijn|intercity)/i],[2,/vernoemd|betekent|\bnaam\b|noemden|genoemd naar/i],
+    [3,/schilder|architect|geboren|woonde|schrijver|componist|koning|prins/i],[7,/fabriek|bier|jenever|kaas|eten|drinken|haven|industrie|product/i],
+    [8,/sport|voetbal|festival|muziek|museum|kunst/i],[6,/rivier|bos|natuur|polder|duin|meer|heide|landschap|dieren/i],
+    [5,/toren|kerk|kasteel|gebouw|wijk|brug|plein|molen/i],[4,/\b1[0-9]{3}\b|eeuw|oorlog|verdrag|Romeinen|stadsrechten/i]];
+  for(const [n,re] of R) if(re.test(t)) return n; return 4;
+}
+
 // ---------- kaarten ----------
 function cardsFor(k){
   const st=S[k], A=ai[k]||{facts:[],quiz:[]};
-  const facts=[...(st.f||[]).map((t,i)=>({t,fx:(st.fx||[])[i]||null,ai:false})),...A.facts.map(x=>({t:x.t,fx:x.fx||null,ai:true}))]
+  const facts=[...(st.f||[]).map((t,i)=>({t,fx:(st.fx||[])[i]||null,ai:false,cat:(CAT_F[k]||[])[i]})),...A.facts.map(x=>({t:x.t,fx:x.fx||null,ai:true}))]
     .map(x=>{
       const id="f:"+k+":"+hash(x.t), showFalse=!!x.fx && hash(id+"w")%2===1;
-      return {type:"fact",id,k,text:showFalse?x.fx:x.t,truth:x.t,correct:!showFalse,ai:x.ai};
+      return {type:"fact",id,k,text:showFalse?x.fx:x.t,truth:x.t,correct:!showFalse,ai:x.ai,cat:x.cat||guessCat(x.t)};
     });
-  const quiz=[...(st.q||[]).map(q=>({...q,ai:false})),...A.quiz.map(q=>({...q,ai:true}))].map(q=>{
+  const quiz=[...(st.q||[]).map((q,i)=>({...q,ai:false,cat:(CAT_Q[k]||[])[i]})),...A.quiz.map(q=>({...q,ai:true}))].map(q=>{
     // open vraag met twee keuzes: links of rechts swipen
     const id="q:"+k+":"+hash(q.q), h=hash(id+"x");
     const wrong=q.o.map((_,i)=>i).filter(i=>i!==q.a);
     const other=q.o[wrong[h%wrong.length]], rightSide=h%2===0;
-    return {type:"tf",id,k,q:q.q,left:rightSide?other:q.o[q.a],rightOpt:rightSide?q.o[q.a]:other,correct:rightSide,right:q.o[q.a],e:q.e||"",ai:q.ai};
+    return {type:"tf",id,k,q:q.q,left:rightSide?other:q.o[q.a],rightOpt:rightSide?q.o[q.a]:other,correct:rightSide,right:q.o[q.a],e:q.e||"",ai:q.ai,cat:q.cat||guessCat(q.q+" "+q.o[q.a])};
   });
   const out=[]; for(let i=0;i<Math.max(facts.length,quiz.length);i++){ if(facts[i])out.push(facts[i]); if(quiz[i])out.push(quiz[i]); }
   return out;
@@ -844,7 +870,7 @@ function whereLabel(k){
   return S[k].n+(d>0?` · over ${d.toFixed(0)} km`:"");
 }
 const longCls=t=>String(t).length>150?" long":"";
-function spoorOf(c){ return 1+hash(c.id)%14; }
+function spoorOf(c){ return c.cat||4; }
 function boardTime(c){
   const i=trip.stops.indexOf(c.k), d=Math.max(0,trip.cum[i]-Math.max(0,pos));
   return fmtTime(new Date(Date.now()+d/SPEED*60000));
@@ -855,13 +881,13 @@ function cardHTML(c,cls){
   const via="";
   if(c.type==="fact") return `<div class="card board ${cls}" data-id="${esc(c.id)}" data-k="${esc(c.k)}">
     ${head(c.ai?"Stelling van Claude":"Waar of niet waar?")}
-    <div class="cbody">${via}<p class="big${longCls(c.text)}">${esc(c.text)}</p>
+    <div class="cbody">${via}<span class="bcat">Spoor ${spoorOf(c)} · ${esc(SPOREN[spoorOf(c)])}</span><p class="big${longCls(c.text)}">${esc(c.text)}</p>
       <div class="tfopts"><button type="button" class="tfopt no" data-act="false">✕ Niet waar</button><button type="button" class="tfopt yes" data-act="true">✓ Waar</button></div></div>
     <div class="cfoot info">${infoInner()}</div>
     <span class="stamp yes">Waar</span><span class="stamp no">Niet waar</span></div>`;
   return `<div class="card board tf ${cls}" data-id="${esc(c.id)}" data-k="${esc(c.k)}">
     ${head(c.ai?"Claude vraagt":"Vraag")}
-    <div class="cbody">${via}<p class="big${longCls(c.q)}">${esc(c.q)}</p>
+    <div class="cbody">${via}<span class="bcat">Spoor ${spoorOf(c)} · ${esc(SPOREN[spoorOf(c)])}</span><p class="big${longCls(c.q)}">${esc(c.q)}</p>
       <div class="deckopts"><button type="button" class="deckopt up" data-act="up"><small>↑ Bovendek</small><b>${esc(c.left)}</b></button>
       <button type="button" class="deckopt down" data-act="down"><small>↓ Benedendek</small><b>${esc(c.rightOpt)}</b></button></div></div>
     <div class="cfoot info">${infoInner()}</div>
@@ -1307,6 +1333,8 @@ $("repCopy").onclick=async()=>{
   try{ await navigator.clipboard.writeText(txt); $("repDone").textContent="Lijst gekopieerd."; }
   catch{ $("repDone").textContent="Kopiëren lukt hier niet. Houd de lijst ingedrukt om te selecteren."; }
 };
+
+$("legend").innerHTML=Object.entries(SPOREN).map(([n,t])=>`<li><b>${n}</b>${esc(t)}</li>`).join("");
 
 // ---------- menu ----------
 function openSheet(){ $("repDone").textContent=""; renderReport(); $("sheet").hidden=false; $("sheetClose").focus(); }
