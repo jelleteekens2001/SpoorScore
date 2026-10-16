@@ -313,6 +313,13 @@ body.moving-force .view .l,body.moving-force .wheel{animation-play-state:running
 .cands{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .cand{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;text-align:left;background:var(--paper-2);border:1.5px solid var(--rule);border-radius:3px;padding:10px 12px;font:inherit;color:inherit;cursor:pointer}
 .cand b{font-size:1rem}
+.recent{list-style:none;margin:8px 0 4px;padding:0;display:flex;flex-direction:column}
+.recent li{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dotted var(--rule);font-size:.88rem;line-height:1.3}
+.recent li small{display:block;color:var(--faint);font-size:.72rem;font-weight:700}
+.recent li span{min-width:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.recent .btn{padding:7px 12px;font-size:.85rem}
+.recent .btn:disabled{opacity:.5}
+.replist li.hd{border:0;padding:0;font-family:var(--f-mono);font-size:.72rem;font-weight:700;text-transform:uppercase}
 .replist{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .replist li{border-left:3px solid var(--rule);padding:2px 0 2px 8px;font-size:.88rem}
 .replist li small{display:block;color:var(--faint);font-size:.72rem;font-weight:700}
@@ -474,10 +481,8 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
 
   <section class="tbl">
     <h3><span class="tno">4</span>Foutje gezien?</h3>
-    <div id="repNow" hidden>
-      <p class="hint" style="margin-top:0">Laatst beantwoorde kaart: <span id="repWhat"></span></p>
-      <button class="btn ghost" id="repBtn" type="button" style="margin-top:8px">Meld deze kaart als foutief</button>
-    </div>
+    <p class="hint" style="margin-top:0" id="repIntro">Klopt een kaart niet? Kies hem uit je laatste vijf kaarten.</p>
+    <ul class="recent" id="repRecent"></ul>
     <p class="hint" id="repDone"></p>
     <ul class="replist" id="repList"></ul>
     <button class="btn ghost" id="repCopy" type="button" hidden>Kopieer gemelde kaarten</button>
@@ -980,7 +985,7 @@ async function decide(dir){
   await fling(el,dir);
   seen.add(c.id); store.set("sq2-seen",[...seen]);
   const ok=(dir>0)===c.correct; results[c.id]=ok; store.set("sq2-res",results);
-  lastCard=c;   // de laatst beantwoorde kaart kun je in het menu als foutief melden
+  lastCard=c; rememberCard(c);   // de laatst beantwoorde kaarten kun je in het menu als foutief melden
   $("led").innerHTML = `Jij kiest <b>${esc(c.type==="tf"?(dir>0?c.rightOpt:c.left):(dir>0?"waar":"niet waar"))}</b>. Het antwoord staat achter de volgende deur…`;
   pending={c,ok,dir};
   await transit("pass", {...(c.type==="tf"?{dd:true,deck:dir>0?"down":"up"}:{}), verdict:ok?"ok":"bad"});
@@ -1275,21 +1280,28 @@ $("destIn").addEventListener("keydown",e=>{ if(e.key==="Enter") findTrips(); });
 // ---------- foutieve stelling melden ----------
 let lastCard=null;
 let reported=store.get("sq2-reported",[]);   // [{id,st,t}]
+let recentCards=store.get("sq2-recent",[]);  // laatste 5 beantwoorde kaarten
 function cardText(c){ return c.type==="fact"?c.text:`${c.q} (${c.left} / ${c.rightOpt})`; }
+function rememberCard(c){
+  recentCards=[{id:c.id,k:c.k,t:cardText(c)},...recentCards.filter(x=>x.id!==c.id)].slice(0,5);
+  store.set("sq2-recent",recentCards);
+}
 function renderReport(){
-  const c=lastCard;
-  $("repNow").hidden=!c;
-  if(c) $("repWhat").textContent=`"${cardText(c)}" (${S[c.k].n})`;
-  $("repList").innerHTML=reported.map(x=>`<li><small>${esc(x.st)}</small>${esc(x.t)}</li>`).join("");
+  const list=recentCards.filter(x=>S[x.k]);
+  $("repIntro").textContent=list.length?"Klopt een kaart niet? Kies hem uit je laatste vijf kaarten.":"Hier verschijnen je laatst beantwoorde kaarten.";
+  $("repRecent").innerHTML=list.map(x=>{const done=reported.some(r=>r.id===x.id);
+    return `<li><span><small>${esc(S[x.k].n)}</small>${esc(x.t)}</span><button type="button" class="btn ghost" data-id="${esc(x.id)}"${done?" disabled":""}>${done?"Gemeld":"Meld"}</button></li>`}).join("");
+  $("repRecent").querySelectorAll("button[data-id]").forEach(b=>b.onclick=()=>reportCard(b.dataset.id));
+  $("repList").innerHTML=reported.length?`<li class="hd">Gemeld</li>`+reported.map(x=>`<li><small>${esc(x.st)}</small>${esc(x.t)}</li>`).join(""):"";
   $("repCopy").hidden=!reported.length;
 }
-$("repBtn").onclick=()=>{
-  const c=lastCard; if(!c) return;
-  if(!reported.some(x=>x.id===c.id)) reported.unshift({id:c.id,st:S[c.k].n,t:cardText(c)});
-  store.set("sq2-reported",reported); seen.add(c.id); store.set("sq2-seen",[...seen]);
+function reportCard(id){
+  const x=recentCards.find(r=>r.id===id); if(!x) return;
+  if(!reported.some(r=>r.id===id)) reported.unshift({id,st:S[x.k].n,t:x.t});
+  store.set("sq2-reported",reported); seen.add(id); store.set("sq2-seen",[...seen]);
   $("repDone").textContent="Gemeld. Deze kaart komt niet meer terug.";
   renderReport(); if(!pending) renderDeck(true);
-};
+}
 $("repCopy").onclick=async()=>{
   const txt=reported.map(x=>`- [${x.st}] ${x.t}`).join("\n");
   try{ await navigator.clipboard.writeText(txt); $("repDone").textContent="Lijst gekopieerd."; }
