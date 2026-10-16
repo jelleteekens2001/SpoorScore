@@ -95,7 +95,15 @@ body.moving .view .l{animation-play-state:running}
 
 /* deur met kaarten */
 .stage{position:relative;flex:1;min-height:210px;background:var(--frame);border-radius:12px 12px 4px 4px;padding:8px;box-shadow:inset 0 0 0 3px var(--seal),0 0 0 3px var(--yellow-dark)}
-.deck{position:absolute;inset:8px;border-radius:8px;overflow:hidden;touch-action:none;background:linear-gradient(180deg,#9aa0ab,#7d838f 70%,#5f6571)}
+.deck{position:absolute;inset:8px;border-radius:8px;overflow:hidden;touch-action:none;background:transparent}
+.thru{position:absolute;inset:8px;border-radius:8px;overflow:hidden;background:linear-gradient(180deg,#e4e1d7 0,#d3cfc3 82%,#5d5a55 82%,#4a4744)}
+.thru .odoor{position:absolute;left:14%;right:14%;top:6%;bottom:18%;display:flex;gap:4px;background:#8a8f99;padding:6px;border-radius:6px 6px 0 0;box-shadow:inset 0 0 0 2px #6b6f78}
+.thru .leaf{flex:1;position:relative;background:linear-gradient(180deg,#c9ccd3,#aeb2bb)}
+.thru .leaf .view{position:absolute;left:12%;right:12%;top:8%;height:52%;border-radius:6px;box-shadow:0 0 0 3px #555a64}
+.thru .leaf .view .extra{height:42%;max-height:40px}
+.thru .pole{position:absolute;top:0;bottom:18%;left:9%;width:7px;border-radius:4px;background:linear-gradient(90deg,#d9dce2,#9da3ad)}
+.thru .pole.r{left:auto;right:9%}
+.thru .lamp{position:absolute;left:30%;right:30%;top:1.5%;height:5px;border-radius:3px;background:#fffbe6;box-shadow:0 0 12px 3px rgba(255,248,200,.6)}
 .card{position:absolute;inset:0;background:var(--surface);border-radius:8px;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;will-change:transform;touch-action:none}
 .card.back1{transform:translateY(8px) scale(.97);filter:brightness(.93)}
 .card.back2{transform:translateY(16px) scale(.94);filter:brightness(.86)}
@@ -252,11 +260,11 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .inside{position:absolute;inset:0;pointer-events:none;z-index:2}
 .inside::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.16) 0 30%,transparent 30% 60%,rgba(255,255,255,.08) 60%)}
 .man{position:absolute;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.man svg{width:100%;height:100%;display:block;animation:bob .45s ease-in-out infinite}
-.man .leg,.man .arm{transform-box:fill-box;transform-origin:50% 0;animation:swing .45s ease-in-out infinite alternate}
+.man svg{width:100%;height:100%;display:block;transform-origin:50% 100%;animation:bob .42s ease-in-out infinite}
+.man .leg,.man .arm{transform-box:fill-box;transform-origin:50% 0;animation:swing .42s ease-in-out infinite alternate}
 .man .leg.b,.man .arm.a{animation-direction:alternate-reverse}
 @keyframes swing{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
-@keyframes bob{50%{transform:translateY(-1.5px)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-4px) rotate(-1deg)}}
 .bwins4 .bwin{flex:1}
 .passsign{position:absolute;left:18px;right:18px;top:18px;z-index:20;background:var(--display);color:#ffffff;border-radius:6px;padding:7px 12px;box-shadow:inset 0 0 0 3px var(--frame),0 4px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:2px;opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s;pointer-events:none}
 .passsign.on{opacity:1;transform:none}
@@ -351,6 +359,11 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
     </div>
 
     <section class="stage" id="stage">
+      <div class="thru" aria-hidden="true"><span class="lamp"></span>
+        <div class="odoor">
+          <div class="leaf"><span class="view"><span class="l far"></span><span class="l trees"></span><span class="l extra" style="animation-delay:-3s"></span><span class="l poles"></span></span></div>
+          <div class="leaf"><span class="view"><span class="l far"></span><span class="l trees"></span><span class="l extra" style="animation-delay:-3.4s"></span><span class="l poles"></span></span></div>
+        </div><span class="pole"></span><span class="pole r"></span></div>
       <div class="led" id="led" role="status"></div>
       <div class="deck" id="deck"></div>
       <div class="doors" aria-hidden="true">
@@ -955,12 +968,15 @@ async function transit(kind,opt={}){
       const W=$("deck").getBoundingClientRect().width, segW=sr.width;
       const target=opt.deck==="up"?upFeet:downFeet;
       // horizontaal: blijft in beeld terwijl de trein langs schuift (zelfde curve als de strook)
-      extra.push(man.animate([{left:(-W/2-wdt/2)+"px"},{left:(dist-W/2-wdt/2)+"px"}],{duration:DUR,easing:EASE,fill:"forwards"}));
+      // hij loopt iets langzamer dan de camera, zodat hij merkbaar door de coupé loopt
+      const drift=W*.22;
+      extra.push(man.animate([{left:(-W/2-wdt/2+drift)+"px"},{left:(dist-W/2-wdt/2-drift)+"px"}],{duration:DUR,easing:EASE,fill:"forwards"}));
       // verticaal: vanaf het halletje de trap op of af, en bij de volgende deur weer terug
+      // trap: in treden omhoog/omlaag in plaats van een gladde glijbeweging
       extra.push(man.animate([
-        {top:(midFeet-hgt)+"px",offset:0},{top:(midFeet-hgt)+"px",offset:.14},
-        {top:(target-hgt)+"px",offset:.36},{top:(target-hgt)+"px",offset:.72},
-        {top:(midFeet-hgt)+"px",offset:.92},{top:(midFeet-hgt)+"px",offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
+        {top:(midFeet-hgt)+"px",offset:0},{top:(midFeet-hgt)+"px",offset:.14,easing:"steps(6,end)"},
+        {top:(target-hgt)+"px",offset:.38},{top:(target-hgt)+"px",offset:.72,easing:"steps(6,end)"},
+        {top:(midFeet-hgt)+"px",offset:.94},{top:(midFeet-hgt)+"px",offset:1}],{duration:DUR,easing:"linear",fill:"forwards"}));
     }
     renderDeck(true);
     if(!stopped) document.body.classList.add("moving-force");
