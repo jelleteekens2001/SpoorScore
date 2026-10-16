@@ -206,7 +206,8 @@ body.moving .view .l{animation-play-state:running}
 .ctl.r{flex-direction:row-reverse}
 .ctr{font-size:.78rem;font-weight:700;color:var(--muted);text-align:center}
 
-.led{color:var(--disp-ink);font-size:.86rem;line-height:1.4;border-top:1px dashed rgba(255,255,255,.28);padding-top:6px;margin-top:2px;max-height:4.4em;overflow:hidden}
+.led{position:absolute;left:16px;right:16px;top:16px;z-index:30;background:var(--display);color:var(--disp-ink);font-size:.9rem;line-height:1.4;border-radius:8px;padding:10px 12px;box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 0 0 2px #ffc917}
+.led:not(:has(button)){display:none}
 .led b{color:var(--disp-hi)}
 .led .ok b{color:#5fe39a}.led .bad b{color:#ff8a9a}
 .led button{background:var(--yellow);color:#003082;border:0;border-radius:4px;padding:4px 10px;font-weight:700;margin:6px 6px 0 0;font-size:.85rem}
@@ -326,15 +327,12 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
       <div class="win"><div class="view"><div class="l far"></div><div class="l trees"></div><div class="l extra"></div><div class="wire"></div><div class="l poles"></div></div></div>
     </div>
 
-    <section class="dest" aria-live="polite">
-      <span class="eyebrow" id="nowEyebrow">…</span>
-      <h2 id="nowTitle">…</h2>
-      <div class="track"><i id="trackFill" style="width:0"></i><b id="trackTrain" style="left:0"></b></div>
-      <div class="signstats" id="stats"></div>
-      <div class="led" id="led">Is het waar? Swipe naar rechts voor waar, naar links voor niet waar.</div>
-    </section>
+    <div class="dest" hidden aria-hidden="true">
+      <span id="nowEyebrow"></span><span id="nowTitle"></span><i id="trackFill"></i><b id="trackTrain"></b><div id="stats"></div>
+    </div>
 
     <section class="stage" id="stage">
+      <div class="led" id="led" role="status"></div>
       <div class="deck" id="deck"></div>
       <div class="doors" aria-hidden="true">
         <div class="door l"><span class="knob"></span></div>
