@@ -9,6 +9,9 @@
 //   /journey?train=3541          haltes en tijden van één trein
 //   /nearby?lat=52.09&lng=5.11   treinen in de buurt van een locatie
 //   /vehicles?raw=1              controle: wat de Virtual Train API terugstuurt
+//   /stations?q=eind             stations zoeken op naam
+//   /trips?lat=52.09&lng=5.11&to=EHV   vertrekkende treinen vanaf het dichtstbijzijnde station naar een bestemming
+//   /trips?from=UT&to=EHV        idem, met een vast vertrekstation
 // Ruw NS-antwoord bekijken bij /journey:  ...&raw=1
 
 const ALLOWED_ORIGINS = [
@@ -29,6 +32,27 @@ const VT_PATHS = [
   "/virtual-train-api/api/v1/vehicle",
   "/virtual-train-api/v1/vehicles",
 ];
+
+const RI = "https://gateway.apiportal.ns.nl/reisinformatie-api/api";
+let STATIONS = null, STATIONS_AT = 0;
+const norm = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
+const fixTime = (v) => (typeof v === "string" ? v.replace(/([+-]\d\d)(\d\d)$/, "$1:$2") : null);
+
+async function getStations(env) {
+  if (STATIONS && Date.now() - STATIONS_AT < 6 * 3600e3) return STATIONS;
+  const res = await fetch(`${RI}/v2/stations`, { headers: { "Ocp-Apim-Subscription-Key": env.NS_KEY }, cf: { cacheTtl: 21600, cacheEverything: true } });
+  if (!res.ok) throw new Error(`stations: status ${res.status}`);
+  const d = await res.json();
+  const raw = Array.isArray(d) ? d : d.payload || d.stations || [];
+  STATIONS = raw.map((s) => ({
+    code: s.code || s.stationCode || s.id?.code,
+    name: s.namen?.lang || s.names?.long || s.name,
+    lat: +(s.lat ?? s.location?.lat), lng: +(s.lng ?? s.location?.lng),
+    nl: (s.land || s.country || "NL") === "NL",
+  })).filter((s) => s.code && s.name && !isNaN(s.lat) && !isNaN(s.lng));
+  STATIONS_AT = Date.now();
+  return STATIONS;
+}
 
 function haversineM(aLat, aLng, bLat, bLng) {
   const r = Math.PI / 180, R = 6371000;
@@ -125,7 +149,59 @@ export default {
       return json({ candidates });
     }
 
-    if (url.pathname !== "/journey") return json({ error: "Onbekend adres. Gebruik /journey, /nearby of /vehicles." }, 404);
+    if (url.pathname === "/stations") {
+      const q = norm(url.searchParams.get("q"));
+      if (q.length < 2) return json({ stations: [] });
+      try {
+        const list = await getStations(env);
+        const hits = list.filter((s) => norm(s.name).includes(q))
+          .sort((a, b) => (b.nl - a.nl) || (norm(a.name).startsWith(q) ? -1 : 0) - (norm(b.name).startsWith(q) ? -1 : 0))
+          .slice(0, 8).map((s) => ({ code: s.code, name: s.name }));
+        return json({ stations: hits });
+      } catch (e) { return json({ error: "Stations ophalen lukt niet: " + e.message }, 502); }
+    }
+
+    if (url.pathname === "/trips") {
+      const to = (url.searchParams.get("to") || "").toUpperCase();
+      if (!/^[A-Z0-9]{1,8}$/.test(to)) return json({ error: "Kies een bestemming." }, 400);
+      let from = (url.searchParams.get("from") || "").toUpperCase(), fromName = null;
+      try {
+        const list = await getStations(env);
+        if (!from) {
+          const lat = parseFloat(url.searchParams.get("lat")), lng = parseFloat(url.searchParams.get("lng"));
+          if (isNaN(lat) || isNaN(lng)) return json({ error: "Geen locatie en geen vertrekstation." }, 400);
+          let best = null, bd = Infinity;
+          for (const s of list) { const d = haversineM(lat, lng, s.lat, s.lng); if (d < bd) { bd = d; best = s; } }
+          if (!best || bd > 15000) return json({ error: "Geen station in de buurt gevonden." }, 404);
+          from = best.code; fromName = best.name;
+        } else fromName = list.find((s) => s.code === from)?.name || from;
+        const toName = list.find((s) => s.code === to)?.name || to;
+        const res = await fetch(`${RI}/v3/trips?fromStation=${from}&toStation=${to}`, { headers: { "Ocp-Apim-Subscription-Key": env.NS_KEY }, cf: { cacheTtl: 30, cacheEverything: true } });
+        if (!res.ok) return json({ error: `NS gaf status ${res.status} bij het zoeken van reizen.` }, 502);
+        const d = await res.json();
+        if (url.searchParams.has("raw")) return json(d);
+        const now = Date.now();
+        const trips = (d.trips || []).map((t) => {
+          const L = t.legs || [], f = L[0] || {}, last = L[L.length - 1] || {};
+          const dep = fixTime(f.origin?.actualDateTime || f.origin?.plannedDateTime), depPlanned = fixTime(f.origin?.plannedDateTime);
+          const arr = fixTime(last.destination?.actualDateTime || last.destination?.plannedDateTime), arrPlanned = fixTime(last.destination?.plannedDateTime);
+          const num = f.product?.number || (String(f.name || "").match(/\d{2,6}/) || [])[0];
+          return {
+            train: num ? String(num) : null,
+            type: f.product?.shortCategoryName || f.product?.categoryCode || f.product?.displayName || "Trein",
+            direction: f.direction || null,
+            dep, depDelay: dep && depPlanned ? Math.round((Date.parse(dep) - Date.parse(depPlanned)) / 60000) : 0,
+            track: f.origin?.actualTrack || f.origin?.plannedTrack || null,
+            arr, arrDelay: arr && arrPlanned ? Math.round((Date.parse(arr) - Date.parse(arrPlanned)) / 60000) : 0,
+            transfers: t.transfers ?? Math.max(0, L.length - 1),
+            cancelled: !!f.cancelled || t.status === "CANCELLED",
+          };
+        }).filter((t) => t.train && t.dep && Date.parse(t.dep) > now - 2 * 60000).slice(0, 6);
+        return json({ from: { code: from, name: fromName }, to: { code: to, name: toName }, trips });
+      } catch (e) { return json({ error: "Reizen zoeken lukt niet: " + e.message }, 502); }
+    }
+
+    if (url.pathname !== "/journey") return json({ error: "Onbekend adres. Gebruik /journey, /nearby, /vehicles, /stations of /trips." }, 404);
 
     const train = url.searchParams.get("train") || "";
     if (!/^\d{1,6}$/.test(train)) return json({ error: "Geef een geldig treinnummer (alleen cijfers)." }, 400);

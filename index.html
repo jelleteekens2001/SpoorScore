@@ -286,6 +286,42 @@ body.moving .rails,body.moving-force .rails{animation-play-state:running}
 .bstripe{margin:0 -14px;height:12px;background:#003082;box-shadow:inset 0 -4px 0 #0063d3}
 body.moving-force .view .l,body.moving-force .wheel{animation-play-state:running}
 
+/* ---- menu: spoorboekje ---- */
+.sheetbox.book{--paper:#f6f1df;--paper-2:#ece5cc;--pink:#1d1a14;--rule:#2a2620;--faint:#8a8270;
+  background:var(--paper);color:var(--pink);border-top:0;font-family:var(--f-body);gap:0;padding-top:0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sheetbox.book{--paper:#22201a;--paper-2:#2c2920;--pink:#efe8d2;--rule:#cfc6ab;--faint:#a39b84}}
+:root[data-theme="dark"] .sheetbox.book{--paper:#22201a;--paper-2:#2c2920;--pink:#efe8d2;--rule:#cfc6ab;--faint:#a39b84}
+.bookcover{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 calc(-1 * max(14px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(14px,env(safe-area-inset-left,0px)));padding:12px max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px));background:#ffc917;color:#003082;border-bottom:3px solid #003082}
+.bk-t{display:block;font-family:var(--f-display);font-weight:800;font-size:1.35rem;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+.bk-s{display:block;font-size:.72rem;font-weight:700;letter-spacing:.04em;margin-top:3px}
+.bk-close{border:2px solid #003082;background:transparent;color:#003082;font-weight:800;border-radius:4px;padding:6px 12px}
+.tbl{padding:14px 0 16px;border-bottom:1px solid var(--rule)}
+.tbl:last-of-type{border-bottom:0}
+.tbl h3{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-family:var(--f-display);font-size:1.02rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.tno{display:inline-grid;place-items:center;min-width:28px;height:24px;padding:0 6px;background:var(--pink);color:var(--paper);font-family:var(--f-mono);font-size:.82rem;border-radius:2px}
+.book .hint{color:var(--faint)}
+.book input{background:transparent;border:0;border-bottom:1.5px solid var(--rule);border-radius:0;color:var(--pink);padding:8px 2px;font-size:1rem}
+.book input::placeholder{color:var(--faint)}
+.book input:focus{outline:none;border-bottom-color:#0063d3;border-bottom-width:2.5px}
+.fields{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.fld{display:grid;grid-template-columns:44px 1fr;align-items:end;gap:8px}
+.fld span{font-family:var(--f-mono);font-size:.78rem;font-weight:700;text-transform:uppercase;padding-bottom:10px}
+.book .btn{border-radius:3px}
+.book .btn.ghost{color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--rule)}
+.book .iconbtn{border:1.5px solid var(--rule);color:var(--pink);border-radius:3px;padding:9px 12px;font-size:.85rem}
+.book .iconbtn[aria-pressed="true"]{background:var(--pink);color:var(--paper)}
+.tt{margin-top:12px;font-variant-numeric:tabular-nums}
+.tt-h,.tt-r{display:grid;grid-template-columns:58px 30px 1fr 52px;gap:8px;align-items:baseline}
+.tt-h{font-family:var(--f-mono);font-size:.7rem;font-weight:700;text-transform:uppercase;border-bottom:2px solid var(--rule);padding:0 2px 4px}
+.tt-r{width:100%;text-align:left;background:none;border:0;border-bottom:1px dotted var(--rule);padding:9px 2px;font:inherit;color:inherit;cursor:pointer}
+.tt-r:hover,.tt-r:focus-visible{background:var(--paper-2);outline:none}
+.tt-r .t{font-family:var(--f-mono);font-weight:700}
+.tt-r .sp{font-family:var(--f-mono);font-weight:700;text-align:center;border:1.5px solid var(--rule);border-radius:2px;font-size:.82rem}
+.tt-r .tr{min-width:0}
+.tt-r .tr b{display:block;font-size:.92rem}
+.tt-r .tr small{display:block;color:var(--faint);font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-r .late{color:#db0029;font-weight:800;font-size:.8rem}
+.tt-r.cx{opacity:.5;text-decoration:line-through}
 /* ---- menu ---- */
 .sheet{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(5,8,20,.55)}
 .sheetbox{background:var(--plat);border-top:6px dotted var(--plat-edge);border-radius:14px 14px 0 0;max-height:86%;overflow-y:auto;overscroll-behavior:contain;
@@ -305,7 +341,16 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
 .btn{border:0;border-radius:6px;padding:11px 18px;font-weight:700;background:var(--blue);color:#ffffff}
 .btn.ghost{background:transparent;color:var(--blue);box-shadow:inset 0 0 0 2px var(--blue)}
 .hint{font-size:.85rem;color:var(--muted);margin:10px 0 0}
-.route{list-style:none;margin:10px 0 0;padding:0}
+.route{list-style:none;margin:6px 0 0;padding:0}
+.book .route button{display:grid!important;grid-template-columns:48px 1fr auto;gap:8px;align-items:baseline;border-bottom:1px dotted var(--rule);padding:7px 0!important}
+.book .route .rt{font-family:var(--f-mono);font-weight:700;font-size:.85rem;font-variant-numeric:tabular-nums}
+.book .route .km{color:var(--faint)}
+.book .route li::before{background:var(--paper-2)!important}
+.book .route li.passed::before{background:var(--pink)!important}
+.book .route li.half::before{background:linear-gradient(var(--pink) var(--h,50%),var(--paper-2) var(--h,50%))!important}
+.book .route .stop{background:var(--paper);border-color:var(--rule)}
+.book .route li.passed .stop,.book .route li.half .stop{border-color:var(--pink)}
+.book .route li.passed .name,.book .route li.passed .rt{color:var(--faint)}
 .route li{position:relative;padding-left:34px}
 .route li::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:4px;background:var(--blue-soft)}
 .route li:first-child::before{top:50%}.route li:last-child::before{bottom:50%}
@@ -382,30 +427,50 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
 </div>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Menu" hidden>
- <div class="sheetbox">
-  <div class="sheethead"><h2>Menu</h2><button class="btn ghost" id="sheetClose" type="button">Sluiten</button></div>
+ <div class="sheetbox book">
+  <div class="bookcover">
+    <div><span class="bk-t">Spoorboekje</span><span class="bk-s">Spoorquiz · dienstregeling 2026</span></div>
+    <button class="bk-close" id="sheetClose" type="button">Sluiten</button>
+  </div>
 
-  <section class="panel">
-    <strong>Jouw trein</strong>
-    <p class="hint" style="margin-top:4px">De app zoekt je trein automatisch via je locatie. Lukt dat niet, vul dan het treinnummer in uit de NS-app.</p>
-    <div class="trainrow"><input type="text" id="trainNr" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Treinnummer, bijv. 3541" aria-label="Treinnummer"><button class="btn" id="start" type="button">Gebruik</button></div>
+  <section class="tbl">
+    <h3><span class="tno">1</span>Reis plannen</h3>
+    <div class="fields">
+      <label class="fld" for="destIn"><span>Naar</span><input id="destIn" list="destList" autocomplete="off" placeholder="Bestemming, bijv. Eindhoven"></label>
+      <label class="fld" for="fromIn"><span>Van</span><input id="fromIn" list="fromList" autocomplete="off" placeholder="Dichtstbijzijnd station"></label>
+      <datalist id="destList"></datalist><datalist id="fromList"></datalist>
+    </div>
+    <button class="btn wide" id="tripsBtn" type="button">Toon vertrekkende treinen</button>
+    <p class="hint" id="tripsHint"></p>
+    <div class="tt" id="tripsTbl" hidden>
+      <div class="tt-h"><span>Vertr.</span><span>Sp.</span><span>Trein</span><span>Aank.</span></div>
+      <div id="tripsRows"></div>
+    </div>
+  </section>
+
+  <section class="tbl">
+    <h3><span class="tno">2</span>Treinnummer</h3>
+    <p class="hint" style="margin-top:0">De app zoekt je trein ook automatisch via je locatie.</p>
+    <div class="trainrow"><input type="text" id="trainNr" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="bijv. 3541" aria-label="Treinnummer"><button class="btn" id="start" type="button">Gebruik</button></div>
     <p class="hint"><button class="btn ghost" id="findTrain" type="button">Zoek mijn trein via locatie</button></p>
     <p class="hint" id="liveHint"></p>
     <p class="hint" id="gpsHint"></p>
   </section>
 
-  <section class="panel">
-    <div class="row" style="justify-content:space-between;align-items:center"><strong>Extra</strong>
-      <button class="iconbtn" id="sound" type="button" aria-pressed="false" style="border-color:var(--blue);color:var(--blue)">Gong uit</button></div>
-    <p class="hint"><button class="btn ghost" id="aiBtn" type="button" hidden>Meer kaarten van Claude over deze plek</button></p>
-    <p class="hint"><button class="btn ghost" id="reset" type="button">Alle kaarten opnieuw tonen</button></p>
+  <section class="tbl">
+    <h3><span class="tno">3</span>Dienstregeling van deze rit</h3>
+    <p class="hint" style="margin-top:0" id="routeSum">Tik op een station als je daar nu bent.</p>
+    <ol class="route" id="route"></ol>
   </section>
 
-  <details class="panel">
-    <summary><span>Route</span><span class="sum" id="routeSum">Tik op een station als je daar nu bent</span></summary>
-    <ol class="route" id="route"></ol>
-  </details>
-
+  <section class="tbl">
+    <h3><span class="tno">4</span>Overige</h3>
+    <div class="row" style="gap:10px;flex-wrap:wrap">
+      <button class="iconbtn" id="sound" type="button" aria-pressed="false">Gong uit</button>
+      <button class="btn ghost" id="aiBtn" type="button" hidden>Meer kaarten van Claude</button>
+      <button class="btn ghost" id="reset" type="button">Alle kaarten opnieuw</button>
+    </div>
+  </section>
 
   <details id="setup" hidden><summary><span id="setupSum"></span></summary>
     <select id="line"></select><select id="from"></select><select id="to"></select><input type="time" id="dep">
@@ -1074,7 +1139,7 @@ function render(){
     if(trip.cum[i]<c-.3) li.className="passed";
     if(i===nearI&&pos>=0) li.classList.add("here");
     if(i<n-1&&trip.cum[i]<=c&&trip.cum[i+1]>c){li.classList.add("half");li.style.setProperty("--h",(50+(c-trip.cum[i])/(trip.cum[i+1]-trip.cum[i])*50).toFixed(0)+"%")}
-    li.innerHTML=`<span class="stop"></span><button type="button"><span class="name">${esc(S[k].n)}</span><span class="km">${trip.cum[i].toFixed(0)} km</span></button>`;
+    li.innerHTML=`<span class="stop"></span><button type="button"><span class="rt">${stopTime(i)}</span><span class="name">${esc(S[k].n)}</span><span class="km">${trip.cum[i].toFixed(0)}</span></button>`;
     li.querySelector("button").onclick=()=>{
       if(P.src!=="time"){$("routeSum").textContent=P.src==="gps"?"GPS volgt je al live":"NS-tijden volgen je al live";return}
       trip.t0=Date.now()-trip.cum[i]/SPEED*60000; demo=false; saveTrip();
@@ -1107,6 +1172,66 @@ $("start").onclick=()=>{
   $("setup").open=false; setupSum(); nearI=-1; render();
   $("led").innerHTML=`Goede reis naar <b>${esc(S[t].n)}</b>. Swipe maar!`;
 };
+
+// ---------- spoorboekje: verwachte tijd per station ----------
+function stopTime(i){
+  const k=trip.stops[i], lv=liveStops().find(x=>norm(x.name)===norm(S[k].n));
+  if(lv){ const t=!isNaN(lv.arr)?lv.arr:lv.dep; if(!isNaN(t)) return fmtTime(new Date(t)); }
+  return fmtTime(new Date(Date.now()+(trip.cum[i]-pos)/SPEED*60000));
+}
+
+// ---------- reis plannen: bestemming kiezen en vertrekkende treinen tonen ----------
+const stationCodes={};
+let sugTimer=null;
+function suggest(inputId,listId){
+  const q=$(inputId).value.trim();
+  clearTimeout(sugTimer);
+  if(!NS_PROXY_URL||q.length<2) return;
+  sugTimer=setTimeout(async()=>{
+    try{
+      const r=await fetch(`${NS_PROXY_URL}/stations?q=${encodeURIComponent(q)}`); const j=await r.json();
+      const list=j.stations||[]; list.forEach(x=>{stationCodes[x.name.toLowerCase()]=x.code});
+      $(listId).innerHTML=list.map(x=>`<option value="${esc(x.name)}"></option>`).join("");
+    }catch{}
+  },250);
+}
+$("destIn").addEventListener("input",()=>suggest("destIn","destList"));
+$("fromIn").addEventListener("input",()=>suggest("fromIn","fromList"));
+async function codeFor(name){
+  const key=name.trim().toLowerCase(); if(!key) return null;
+  if(stationCodes[key]) return stationCodes[key];
+  const r=await fetch(`${NS_PROXY_URL}/stations?q=${encodeURIComponent(name.trim())}`); const j=await r.json();
+  const x=(j.stations||[])[0]; if(x){ stationCodes[x.name.toLowerCase()]=x.code; return x.code; }
+  return null;
+}
+async function findTrips(){
+  const hint=$("tripsHint"), tbl=$("tripsTbl"), rows=$("tripsRows");
+  if(!NS_PROXY_URL){ hint.textContent="Reizen zoeken werkt alleen op je eigen site met de NS-koppeling."; return; }
+  tbl.hidden=true;
+  try{
+    hint.textContent="Zoeken…";
+    const to=await codeFor($("destIn").value);
+    if(!to){ hint.textContent="Bestemming niet gevonden. Kies een station uit de lijst."; return; }
+    let qs=`to=${encodeURIComponent(to)}`;
+    if($("fromIn").value.trim()){ const f=await codeFor($("fromIn").value); if(!f){hint.textContent="Vertrekstation niet gevonden.";return} qs+=`&from=${encodeURIComponent(f)}`; }
+    else if(gps) qs+=`&lat=${gps.lat.toFixed(5)}&lng=${gps.lon.toFixed(5)}`;
+    else { hint.textContent="Je locatie is niet bekend. Vul bij 'Van' je vertrekstation in."; return; }
+    const r=await fetch(`${NS_PROXY_URL}/trips?${qs}`); const j=await r.json().catch(()=>({error:"Onleesbaar antwoord"}));
+    if(!r.ok||j.error) throw new Error(j.error||("status "+r.status));
+    if(!j.trips?.length){ hint.textContent=`Geen treinen gevonden van ${j.from?.name||"hier"} naar ${j.to?.name||"je bestemming"}.`; return; }
+    hint.innerHTML=`Van <b>${esc(j.from.name)}</b> naar <b>${esc(j.to.name)}</b>. Tik op je trein.`;
+    const late=d=>d>0?` <span class="late">+${d}</span>`:"";
+    rows.innerHTML=j.trips.map(t=>`<button type="button" class="tt-r${t.cancelled?" cx":""}" data-nr="${esc(t.train)}">
+      <span class="t">${fmtTime(new Date(t.dep))}${late(t.depDelay)}</span>
+      <span class="sp">${esc(t.track||"–")}</span>
+      <span class="tr"><b>${esc(t.type)} ${esc(t.train)}</b><small>${t.direction?`richting ${esc(t.direction)}`:""}${t.transfers?` · ${t.transfers}× overstappen`:""}</small></span>
+      <span class="t">${t.arr?fmtTime(new Date(t.arr)):"–"}${late(t.arrDelay)}</span></button>`).join("");
+    rows.querySelectorAll(".tt-r").forEach(b=>b.onclick=()=>{ if(b.classList.contains("cx")) return; closeSheet(); chooseTrain(b.dataset.nr); });
+    tbl.hidden=false;
+  }catch(e){ hint.textContent=`Zoeken lukt niet: ${e.message||"geen verbinding"}.`; }
+}
+$("tripsBtn").onclick=findTrips;
+$("destIn").addEventListener("keydown",e=>{ if(e.key==="Enter") findTrips(); });
 
 // ---------- menu ----------
 function openSheet(){ $("sheet").hidden=false; $("sheetClose").focus(); }
