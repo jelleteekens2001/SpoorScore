@@ -114,7 +114,11 @@ body.moving .view .l{animation-play-state:running}
 .card.board .answer small{color:#c8d4ef}
 .card.board .answer strong{color:#ffffff}
 .card.board .cfoot{margin-top:auto;background:#ffffff;color:#003082;font-weight:700;padding:7px 14px;border-radius:0 0 8px 8px;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card.board .stamp{background:#ffffff}
+.card.board .stamp{background:#ffffff;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.05rem}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}
+.choices .opt{background:#ffffff;color:#003082;border-radius:6px;padding:10px 12px;font-weight:800;font-size:1.02rem;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.choices .opt.r{text-align:right;background:#ffc917}
+.ctl span{max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card.top.dragging{cursor:grabbing}
 .band{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:.78rem;font-weight:700}
 .band .kind{color:#003082;background:var(--yellow);padding:3px 9px;border-radius:4px}
@@ -302,7 +306,7 @@ select,input{background:var(--surface);border:1px solid #b9bcc8;border-radius:6p
   <div class="rails" aria-hidden="true"></div>
  </div>
   <div class="controls">
-    <div class="ctl"><button class="round no" id="btnNo" type="button" aria-label="Naar links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span id="lblNo">Volgende</span></div>
+    <div class="ctl"><button class="round no" id="btnNo" type="button" aria-label="Naar links"><svg id="noIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span id="lblNo">Volgende</span></div>
     <span class="ctr">of swipe</span>
     <div class="ctl r"><button class="round yes" id="btnYes" type="button" aria-label="Naar rechts"><svg id="yesIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><span id="lblYes">Bewaren</span></div>
   </div>
@@ -643,10 +647,11 @@ function cardsFor(k){
       return {type:"fact",id,k,text:showFalse?x.fx:x.t,truth:x.t,correct:!showFalse,ai:x.ai};
     });
   const quiz=[...(st.q||[]).map(q=>({...q,ai:false})),...A.quiz.map(q=>({...q,ai:true}))].map(q=>{
-    const id="q:"+k+":"+hash(q.q), h=hash(id+"x"), showRight=h%2===0;
+    // open vraag met twee keuzes: links of rechts swipen
+    const id="q:"+k+":"+hash(q.q), h=hash(id+"x");
     const wrong=q.o.map((_,i)=>i).filter(i=>i!==q.a);
-    const shown=showRight?q.a:wrong[h%wrong.length];
-    return {type:"tf",id,k,q:q.q,shown:q.o[shown],correct:shown===q.a,right:q.o[q.a],e:q.e||"",ai:q.ai};
+    const other=q.o[wrong[h%wrong.length]], rightSide=h%2===0;
+    return {type:"tf",id,k,q:q.q,left:rightSide?other:q.o[q.a],rightOpt:rightSide?q.o[q.a]:other,correct:rightSide,right:q.o[q.a],e:q.e||"",ai:q.ai};
   });
   const out=[]; for(let i=0;i<Math.max(facts.length,quiz.length);i++){ if(facts[i])out.push(facts[i]); if(quiz[i])out.push(quiz[i]); }
   return out;
@@ -675,10 +680,11 @@ function cardHTML(c,cls){
     <div class="cfoot">Swipe rechts = waar · links = niet waar</div>
     <span class="stamp yes">Waar</span><span class="stamp no">Niet waar</span></div>`;
   return `<div class="card board tf ${cls}" data-id="${esc(c.id)}">
-    ${head(c.ai?"Claude vraagt":"Klopt dit?")}
-    <div class="cbody">${via}<p class="big${longCls(c.q)}">${esc(c.q)}</p><div class="answer"><small>Antwoord</small><strong>${esc(c.shown)}</strong></div></div>
-    <div class="cfoot">Swipe rechts = klopt · links = klopt niet</div>
-    <span class="stamp yes">Klopt</span><span class="stamp no">Klopt niet</span></div>`;
+    ${head(c.ai?"Claude vraagt":"Vraag")}
+    <div class="cbody">${via}<p class="big${longCls(c.q)}">${esc(c.q)}</p>
+      <div class="choices"><span class="opt l">← ${esc(c.left)}</span><span class="opt r">${esc(c.rightOpt)} →</span></div></div>
+    <div class="cfoot">Swipe naar het antwoord dat jij denkt</div>
+    <span class="stamp yes">${esc(c.rightOpt)}</span><span class="stamp no">${esc(c.left)}</span></div>`;
 }
 function resultHTML(p){
   const c=p.c;
@@ -694,7 +700,7 @@ function resultHTML(p){
     <div class="band"><span class="kind">${p.ok?"Goed":"Fout"}</span><span class="where">${esc(S[c.k].n)}</span></div>
     <div class="cbody">
       <div class="verdict">${p.ok?"Goed!":"Helaas"}</div>
-      <p class="said">Jij zei dat "${esc(c.shown)}" ${p.dir>0?"klopt":"niet klopt"}.</p>
+      <p class="said">Jij koos "${esc(p.dir>0?c.rightOpt:c.left)}".</p>
       <p class="qtext">${esc(c.q)}</p>
       <div class="answer"><small>Juiste antwoord</small><strong>${esc(c.right)}</strong></div>
       ${c.e?`<p class="expl">${esc(c.e)}</p>`:""}
@@ -730,15 +736,16 @@ function renderDeck(force){
   bindDrag(deck.querySelector(".card.top"));
   setControls(top);
 }
-const ICON_CHECK='<path d="M5 12.5l4.5 4.5L19 7.5"/>', ICON_NEXT='<path d="M5 12h13M13 6l6 6-6 6"/>';
+const ICON_CHECK='<path d="M5 12.5l4.5 4.5L19 7.5"/>', ICON_NEXT='<path d="M5 12h13M13 6l6 6-6 6"/>', ICON_PREV='<path d="M19 12H6M11 6l-6 6 6 6"/>', ICON_X='<path d="M6 6l12 12M18 6L6 18"/>';
 function setControls(c){
   $("btnNo").disabled=$("btnYes").disabled=!c;
   if(!c) return;
-  if(c==="result"){ $("lblNo").textContent="Volgende"; $("lblYes").textContent="Volgende"; $("yesIcon").innerHTML=ICON_NEXT; return; }
+  if(c==="result"){ $("lblNo").textContent="Volgende"; $("lblYes").textContent="Volgende"; $("yesIcon").innerHTML=ICON_NEXT; $("noIcon").innerHTML=ICON_X; return; }
   const tf=c.type==="tf";
-  $("lblNo").textContent=tf?"Klopt niet":"Niet waar";
-  $("lblYes").textContent=tf?"Klopt":"Waar";
-  $("yesIcon").innerHTML=ICON_CHECK;
+  $("lblNo").textContent=tf?c.left:"Niet waar";
+  $("lblYes").textContent=tf?c.rightOpt:"Waar";
+  $("yesIcon").innerHTML=tf?ICON_NEXT:ICON_CHECK;
+  $("noIcon").innerHTML=tf?ICON_PREV:ICON_X;
 }
 
 // ---------- swipen ----------
@@ -790,7 +797,7 @@ async function decide(dir){
   await fling(el,dir);
   seen.add(c.id); store.set("sq2-seen",[...seen]);
   const ok=(dir>0)===c.correct; results[c.id]=ok; store.set("sq2-res",results);
-  $("led").innerHTML = `Jij zegt <b>${dir>0?(c.type==="tf"?"klopt":"waar"):(c.type==="tf"?"klopt niet":"niet waar")}</b>. Het antwoord staat achter de volgende deur…`;
+  $("led").innerHTML = `Jij kiest <b>${esc(c.type==="tf"?(dir>0?c.rightOpt:c.left):(dir>0?"waar":"niet waar"))}</b>. Het antwoord staat achter de volgende deur…`;
   pending={c,ok,dir};
   await transit("pass");
   updateScore();
@@ -849,7 +856,7 @@ async function proceed(kind){
   if(busy) return;
   busy=true; pending=null;
   await transit(kind);
-  $("led").innerHTML=`Volgende halte: <b>${esc(nextName())}</b>. Waar of niet waar? Swipe maar.`;
+  $("led").innerHTML=`Volgende halte: <b>${esc(nextName())}</b>. Swipe maar.`;
   busy=false;
 }
 $("btnNo").onclick=()=>decide(-1);
